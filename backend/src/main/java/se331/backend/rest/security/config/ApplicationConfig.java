@@ -1,4 +1,4 @@
-package se331.rest.security.config;
+package se331.backend.rest.security.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import se331.rest.security.user.UserRepository;
+import se331.backend.rest.security.user.UserRepository;
 
 @Configuration
 @RequiredArgsConstructor

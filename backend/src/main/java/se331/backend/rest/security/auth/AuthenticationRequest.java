@@ -1,4 +1,4 @@
-package se331.rest.security.auth;
+package se331.backend.rest.security.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

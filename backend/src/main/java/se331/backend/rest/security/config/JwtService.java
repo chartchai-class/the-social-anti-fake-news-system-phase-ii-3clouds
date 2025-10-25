@@ -1,4 +1,4 @@
-package se331.rest.security.config;
+package se331.backend.rest.security.config;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
