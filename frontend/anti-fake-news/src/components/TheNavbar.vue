@@ -15,6 +15,7 @@
         </router-link>
 
         <router-link 
+          v-if="canCreateNews"
           to="/add-news" 
           class="flex items-center space-x-1 px-2 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 text-xs sm:text-sm sm:space-x-2 sm:px-3 md:px-4 md:py-2"
         >
@@ -29,9 +30,15 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore, type Role } from '../stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
+
+const creatorRoles: Role[] = ['ROLE_MEMBER', 'ROLE_ADMIN']
+const canCreateNews = computed(() => authStore.hasAnyRole(creatorRoles))
 
 const refreshPage = () => {
   if (router.currentRoute.value.path === '/') {
@@ -40,4 +47,8 @@ const refreshPage = () => {
     router.push('/')
   }
 }
+
+onMounted(() => {
+  authStore.hydrateFromStorage()
+})
 </script>

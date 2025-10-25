@@ -17,10 +17,12 @@ const router = createRouter({
       name: 'news-detail',
       component: NewsDetail,
     },
-    { path: '/add-news', 
-      name: 'addNews', 
-      component: AddNews ,
-    }
+    {
+      path: '/add-news',
+      name: 'addNews',
+      component: AddNews,
+      meta: { requiredRoles: ['ROLE_MEMBER', 'ROLE_ADMIN'] },
+    },
   ],
 })
 
