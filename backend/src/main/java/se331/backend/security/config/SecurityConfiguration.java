@@ -43,13 +43,16 @@ public class SecurityConfiguration {
                 .csrf((crsf) -> crsf.disable())
                 .authorizeHttpRequests((authorize) -> {
                     authorize.requestMatchers("/api/v1/auth/**").permitAll()
-
                             .requestMatchers(HttpMethod.GET, "/api/news").permitAll()       // อนุญาตดึงข่าวทั้งหมด
                             .requestMatchers(HttpMethod.GET, "/api/news/**").permitAll()   // อนุญาตดึงข่าวเดียว (เช่น /api/news/1)
-
+                            .requestMatchers(HttpMethod.POST, "/api/v1/news/**")
+                            .hasAnyRole("MEMBER", "ADMIN")                       // ✅ MEMBER, ADMIN โพสต์ข่าวได้
+                            .requestMatchers(HttpMethod.POST, "/api/v1/vote/**")
+                            .hasAnyRole("READER", "MEMBER", "ADMIN")             // ✅ ต้อง login ถึงโหวตได้
+                            .requestMatchers(HttpMethod.DELETE, "/api/v1/news/**")
+                            .hasRole("ADMIN")                                    // ✅ ADMIN เท่านั้นที่ลบข่าวได้
                             .anyRequest().authenticated();
                 })
-
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .logout((logout) -> {
