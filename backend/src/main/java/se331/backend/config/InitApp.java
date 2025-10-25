@@ -2,14 +2,20 @@ package se331.backend.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import se331.backend.dao.NewsDao;
 import se331.backend.entity.Comment;
 import se331.backend.entity.News;
 import se331.backend.entity.Vote;
+import se331.backend.security.user.Role;
+import se331.backend.security.user.User;
+import se331.backend.security.user.UserRepository;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 
 @Component
 public class InitApp implements CommandLineRunner {
@@ -17,9 +23,17 @@ public class InitApp implements CommandLineRunner {
     @Autowired
     private NewsDao newsDao;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        initDefaultUsers();
+
         if (newsDao.findAll().isEmpty()) {
             System.out.println("No news found. Initializing sample data...");
             initSampleData();
@@ -1205,5 +1219,58 @@ public class InitApp implements CommandLineRunner {
         news31.getComments().add(c31_4);
         newsDao.save(news31);
 
+    }
+
+    private void initDefaultUsers() {
+        seedUserIfMissing(
+                "admin",
+                "admin@example.com",
+                "System",
+                "Admin",
+                "admin",
+                Role.ROLE_ADMIN
+        );
+        seedUserIfMissing(
+                "member",
+                "member@example.com",
+                "Regular",
+                "Member",
+                "member",
+                Role.ROLE_MEMBER
+        );
+        seedUserIfMissing(
+                "reader",
+                "reader@example.com",
+                "Casual",
+                "Reader",
+                "reader",
+                Role.ROLE_READER
+        );
+    }
+
+    private void seedUserIfMissing(
+            String username,
+            String email,
+            String firstname,
+            String lastname,
+            String rawPassword,
+            Role role
+    ) {
+        Optional<User> existing = userRepository.findByUsername(username);
+        if (existing.isPresent()) {
+            return;
+        }
+
+        User user = User.builder()
+                .username(username)
+                .email(email)
+                .firstname(firstname)
+                .lastname(lastname)
+                .password(passwordEncoder.encode(rawPassword))
+                .roles(List.of(role))
+                .enabled(true)
+                .build();
+
+        userRepository.save(user);
     }
 }
