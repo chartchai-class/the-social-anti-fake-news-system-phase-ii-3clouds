@@ -1,4 +1,4 @@
-package se331.backend.rest.security.auth;
+package se331.backend.security.auth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

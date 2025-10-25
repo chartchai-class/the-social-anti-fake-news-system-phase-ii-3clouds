@@ -1,4 +1,4 @@
-package se331.backend.rest.security.config;
+package se331.backend.security.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
