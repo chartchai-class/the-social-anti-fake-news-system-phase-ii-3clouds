@@ -1,10 +1,16 @@
 package se331.backend.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 public class News {
 
@@ -25,8 +31,11 @@ public class News {
     private Instant dateTime; // ใช้ Instant สำหรับเวลาที่เป็นมาตรฐาน
 
     // ความสัมพันธ์: ข่าวหนึ่งข่าวมีได้หลายคอมเมนต์
-    // CascadeType.ALL หมายถึงถ้าลบข่าว ให้ลบคอมเมนต์ด้วย
-    @OneToMany(mappedBy = "news", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    // mappedBy = "news": บอกว่า Comment อ้างอิงกลับไปที่ News โดยใช้ฟิลด์ "news" ใน Comment
+    // cascade = CascadeType.ALL: ทุกการกระทำ (บันทึก, อัพเดต, ลบ) บน News จะส่งผลกับ Comment ด้วย
+    // fetch = FetchType.EAGER: จะโหลด Comment ทั้งหมดพร้อมกับ News ทันทีที่ดึงข้อมูล
+    @OneToMany(mappedBy = "news", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 
     @Column(columnDefinition = "integer default 0")
