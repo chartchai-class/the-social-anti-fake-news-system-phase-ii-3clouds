@@ -87,6 +87,7 @@
               </div>
             </button>
             <button
+              v-if="canViewVoteTab"
               @click="switchTab('vote')"
               :disabled="isTabSwitching"
               :class="{
@@ -102,6 +103,9 @@
               </div>
             </button>
           </div>
+          <div v-if="!canViewVoteTab" class="mt-3 text-sm text-gray-500">
+            Sign in to vote and comment.
+          </div>
         </div>
 
         <div v-if="isTabSwitching" class="text-center py-8">
@@ -116,7 +120,7 @@
         />
 
         <VoteSection
-            v-else-if="activeTab === 'vote'"
+            v-else-if="activeTab === 'vote' && canViewVoteTab"
             :news="news"
             @submit-vote="handleVoteSubmission"
         />
@@ -147,6 +151,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useNewsStore } from '../stores/news';
 import { useNotificationStore } from '../stores/notification';
+import { useAuthStore, type Role } from '../stores/auth';
 import CommentsSection from '../components/CommentsVotes.vue';
 import VoteSection from '../components/VoteSection.vue';
 import type { Vote } from '../stores/news';
@@ -154,6 +159,7 @@ import type { Vote } from '../stores/news';
 const route = useRoute();
 const newsStore = useNewsStore();
 const notificationStore = useNotificationStore();
+const authStore = useAuthStore();
 
 // **แก้ไข: ใช้ parseFloat เพื่อรองรับ ID ที่เป็นตัวเลขทศนิยม**
 const newsId = parseFloat(route.params.id as string);
@@ -167,6 +173,8 @@ const isTabSwitching = ref(false);
 const pendingTab = ref<'comments' | 'vote' | null>(null);
 const isNavigationLoading = ref(false);
 
+const allowedVoteRoles: Role[] = ['ROLE_READER', 'ROLE_MEMBER', 'ROLE_ADMIN'];
+const canViewVoteTab = computed(() => authStore.hasAnyRole(allowedVoteRoles));
 
 const loadingProgress = ref(0);
 // let progressInterval: NodeJS.Timeout | null = null;
@@ -240,8 +248,18 @@ watch(() => route.query.loading, (newVal) => {
   }
 });
 
+watch(canViewVoteTab, (value) => {
+  if (!value && activeTab.value === 'vote') {
+    activeTab.value = 'comments';
+  }
+});
+
 const switchTab = async (tab: 'comments' | 'vote') => {
   if (activeTab.value === tab || isTabSwitching.value) return;
+  if (tab === 'vote' && !canViewVoteTab.value) {
+    notificationStore.addNotification('You do not have permission to vote on this news.', 'error');
+    return;
+  }
   
   try {
     isTabSwitching.value = true;
@@ -267,6 +285,11 @@ const handleVoteSubmission = async (data: {
   imageUrl: string | null;
 }) => {
   try {
+    if (!canViewVoteTab.value) {
+      notificationStore.addNotification('You do not have permission to vote on this news.', 'error');
+      return;
+    }
+
     // Removed loadingStore usage for vote submission
     
     newsStore.addCommentToNews(
@@ -300,6 +323,7 @@ const handleImageError = () => {
 };
 
 onMounted(() => {
+  authStore.hydrateFromStorage();
   loadNewsDetail();
 });
 </script>
