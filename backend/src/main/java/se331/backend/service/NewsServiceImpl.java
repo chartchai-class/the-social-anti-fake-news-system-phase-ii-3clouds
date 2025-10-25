@@ -66,7 +66,7 @@ public class NewsServiceImpl implements NewsService {
     @Override
     @Transactional
     public NewsDTO addCommentToNews(Long newsId, CreateCommentRequest request) {
-        News news = newsDao.findById(newsId) // เรียกผ่าน DAO
+        News news = newsDao.findById(newsId)
                 .orElseThrow(() -> new EntityNotFoundException("News not found with id: " + newsId));
 
         Comment comment = new Comment();
@@ -77,9 +77,18 @@ public class NewsServiceImpl implements NewsService {
         comment.setVote(Vote.valueOf(request.getVote().toUpperCase()));
         comment.setNews(news);
 
+        // 1. เพิ่มคอมเมนต์ลง List
         news.getComments().add(comment);
 
-        News updatedNews = newsDao.save(news); // เรียกผ่าน DAO
+        // 2.อัปเดตคะแนนโหวตใน News
+        if (comment.getVote() == Vote.REAL) {
+            news.setRealVotes(news.getRealVotes() + 1);
+        } else {
+            news.setFakeVotes(news.getFakeVotes() + 1);
+        }
+
+        // 3. บันทึก News (ซึ่งจะบันทึก Comment ใหม่ และ อัปเดต Vote counts ไปพร้อมกัน)
+        News updatedNews = newsDao.save(news);
 
         return newsMapper.toNewsDTO(updatedNews);
     }

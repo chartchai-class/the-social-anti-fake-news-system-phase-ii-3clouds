@@ -41,6 +41,9 @@ public class InitApp implements CommandLineRunner {
         news1.setReporter("Robert Clark");
         news1.setDateTime(Instant.parse("2025-08-09T11:00:00Z"));
 
+        news1.setRealVotes(2);
+        news1.setFakeVotes(14);
+
         // คอมเมนต์สำหรับข่าวที่ 1
         Comment c1_1 = new Comment();
         c1_1.setUsername("Jack Phillips");
@@ -90,6 +93,9 @@ public class InitApp implements CommandLineRunner {
         news2.setImage("https://science.nasa.gov/wp-content/uploads/2024/01/toi715b1280-illo.jpg?resize=900,506");
         news2.setReporter("Emily Garcia");
         news2.setDateTime(Instant.parse("2025-08-14T16:27:45.406644Z"));
+
+        news2.setRealVotes(210);
+        news2.setFakeVotes(25);
 
         // คอมเมนต์สำหรับข่าวที่ 2
         Comment c2_1 = new Comment();

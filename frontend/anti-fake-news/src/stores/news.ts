@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import apiClient from '../services/NewsService';
 
-// 1. กำหนด Interfaces สำหรับโครงสร้างข้อมูล (เหมือนเดิม)
 export interface Comment {
   id: number;
   user: string;

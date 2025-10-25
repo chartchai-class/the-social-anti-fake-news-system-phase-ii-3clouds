@@ -27,7 +27,11 @@ public class News {
     @OneToMany(mappedBy = "news", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Comment> comments = new ArrayList<>();
 
-    // Getters and Setters...
+    @Column(columnDefinition = "integer default 0")
+    private int realVotes = 0;
+
+    @Column(columnDefinition = "integer default 0")
+    private int fakeVotes = 0;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -45,4 +49,9 @@ public class News {
     public void setDateTime(Instant dateTime) { this.dateTime = dateTime; }
     public List<Comment> getComments() { return comments; }
     public void setComments(List<Comment> comments) { this.comments = comments; }
+
+    public int getRealVotes() { return realVotes; }
+    public void setRealVotes(int realVotes) { this.realVotes = realVotes; }
+    public int getFakeVotes() { return fakeVotes; }
+    public void setFakeVotes(int fakeVotes) { this.fakeVotes = fakeVotes; }
 }

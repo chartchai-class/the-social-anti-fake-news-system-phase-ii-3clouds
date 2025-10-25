@@ -42,10 +42,14 @@ public class NewsMapper {
                 .collect(Collectors.toList());
         dto.setComments(commentDTOs);
 
-        VoteSummaryDTO summary = calculateVoteSummary(news.getComments());
+        VoteSummaryDTO summary = new VoteSummaryDTO(news.getRealVotes(), news.getFakeVotes());
         dto.setVoteSummary(summary);
-        dto.setTotalVotes((int) (summary.getReal() + summary.getFake()));
-        dto.setStatus(calculateStatus(summary));
+        dto.setTotalVotes(news.getRealVotes() + news.getFakeVotes());
+
+//        VoteSummaryDTO summary = calculateVoteSummary(news.getComments());
+//        dto.setVoteSummary(summary);
+//        dto.setTotalVotes((int) (summary.getReal() + summary.getFake()));
+//        dto.setStatus(calculateStatus(summary));
 
         return dto;
     }
@@ -61,15 +65,15 @@ public class NewsMapper {
         return dto;
     }
 
-    private VoteSummaryDTO calculateVoteSummary(List<Comment> comments) {
-        long realVotes = comments.stream()
-                .filter(c -> c.getVote() == Vote.REAL)
-                .count();
-        long fakeVotes = comments.stream()
-                .filter(c -> c.getVote() == Vote.FAKE)
-                .count();
-        return new VoteSummaryDTO(realVotes, fakeVotes);
-    }
+//    private VoteSummaryDTO calculateVoteSummary(List<Comment> comments) {
+//        long realVotes = comments.stream()
+//                .filter(c -> c.getVote() == Vote.REAL)
+//                .count();
+//        long fakeVotes = comments.stream()
+//                .filter(c -> c.getVote() == Vote.FAKE)
+//                .count();
+//        return new VoteSummaryDTO(realVotes, fakeVotes);
+//    }
 
     private String calculateStatus(VoteSummaryDTO summary) {
         if (summary.getReal() > summary.getFake()) {
