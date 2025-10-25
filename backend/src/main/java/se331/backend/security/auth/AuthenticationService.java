@@ -45,7 +45,7 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .username(request.getUsername())
-                .roles(List.of(Role.ROLE_USER))
+                .roles(List.of(Role.ROLE_READER))
                 .enabled(true)
                 .build();
 
