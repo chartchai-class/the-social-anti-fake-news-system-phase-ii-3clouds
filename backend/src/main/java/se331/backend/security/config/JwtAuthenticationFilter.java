@@ -29,7 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
 
-    // 🆕 ใช้บันทึก role ให้ผู้ใช้ (assign ROLE_READER ครั้งแรก)
+    // ใช้บันทึก role ให้ผู้ใช้ (assign ROLE_READER ครั้งแรก)
     private final UserRepository userRepository;
 
     @Override
@@ -45,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // ปล่อย endpoint auth (register/login/refresh) ผ่าน
+        // ปล่อย endpoint auth (register/login) ผ่าน
         if (request.getServletPath().contains("/api/v1/auth")) {
             filterChain.doFilter(request, response);
             return;
@@ -63,7 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-            // ✅ ถ้า user ยังไม่มี role ให้ assign ROLE_READER ตอนนี้ (ครั้งแรกที่ล็อกอินสำเร็จ)
+            // ถ้า user ยังไม่มี role ให้ assign ROLE_READER ตอนนี้ (ครั้งแรกที่ล็อกอินสำเร็จ)
             if (userDetails instanceof User userEntity) {
                 if (userEntity.getRoles() == null || userEntity.getRoles().isEmpty()) {
                     userEntity.setRoles(List.of(Role.ROLE_READER));
