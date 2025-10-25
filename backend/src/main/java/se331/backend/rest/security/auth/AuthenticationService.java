@@ -1,4 +1,4 @@
-package se331.rest.security.auth;
+package se331.backend.rest.security.auth;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,13 +12,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import se331.rest.security.config.JwtService;
-import se331.rest.security.token.Token;
-import se331.rest.security.token.TokenRepository;
-import se331.rest.security.token.TokenType;
-import se331.rest.security.user.Role;
-import se331.rest.security.user.User;
-import se331.rest.security.user.UserRepository;
+import se331.backend.rest.security.config.JwtService;
+import se331.backend.rest.security.token.Token;
+import se331.backend.rest.security.token.TokenRepository;
+import se331.backend.rest.security.token.TokenType;
+import se331.backend.rest.security.user.Role;
+import se331.backend.rest.security.user.User;
+import se331.backend.rest.security.user.UserRepository;
 import se331.rest.util.LabMapper;
 
 import se331.rest.entity.Organizer;

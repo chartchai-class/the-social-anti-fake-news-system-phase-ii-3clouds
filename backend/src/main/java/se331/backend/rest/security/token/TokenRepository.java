@@ -1,4 +1,4 @@
-package se331.rest.security.token;
+package se331.backend.rest.security.token;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

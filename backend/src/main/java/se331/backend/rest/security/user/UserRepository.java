@@ -1,4 +1,4 @@
-package se331.rest.security.user;
+package se331.backend.rest.security.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
