@@ -43,15 +43,11 @@ public class SecurityConfiguration {
                 .csrf((crsf) -> crsf.disable())
                 .authorizeHttpRequests((authorize) -> {
                     authorize.requestMatchers("/api/v1/auth/**").permitAll()
-                            .requestMatchers(HttpMethod.GET, "/events").permitAll()
-                            .requestMatchers(HttpMethod.GET, "/organizers").permitAll()
-                            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                            .requestMatchers(HttpMethod.POST, "/events").hasRole("ADMIN")
-                            .anyRequest().authenticated();
-                })
 
-                .sessionManagement((session) -> {
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+                            .requestMatchers(HttpMethod.GET, "/api/news").permitAll()       // อนุญาตดึงข่าวทั้งหมด
+                            .requestMatchers(HttpMethod.GET, "/api/news/**").permitAll()   // อนุญาตดึงข่าวเดียว (เช่น /api/news/1)
+
+                            .anyRequest().authenticated();
                 })
 
                 .authenticationProvider(authenticationProvider)
