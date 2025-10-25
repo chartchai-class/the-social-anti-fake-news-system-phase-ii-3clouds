@@ -1,4 +1,4 @@
-package se331.rest.security.user;
+package se331.backend.rest.security.user;
 
 public interface UserDao {
     User findByUsername(String username);

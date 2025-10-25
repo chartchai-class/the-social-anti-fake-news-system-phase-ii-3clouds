@@ -1,4 +1,4 @@
-package se331.rest.security.user;
+package se331.backend.rest.security.user;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import se331.rest.entity.Organizer;
-import se331.rest.security.token.Token;
+import se331.backend.rest.security.token.Token;
 
 import java.util.ArrayList;
 import java.util.Collection;
