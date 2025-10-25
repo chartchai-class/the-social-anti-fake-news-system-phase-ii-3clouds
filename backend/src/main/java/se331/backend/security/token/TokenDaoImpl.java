@@ -1,4 +1,4 @@
-package se331.backend.rest.security.token;
+package se331.backend.security.token;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

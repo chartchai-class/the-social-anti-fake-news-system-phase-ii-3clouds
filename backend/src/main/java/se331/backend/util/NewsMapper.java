@@ -3,12 +3,28 @@ package se331.backend.util;
 import se331.backend.entity.*;
 
 import org.springframework.stereotype.Component;
+import se331.backend.security.user.User;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 public class NewsMapper {
+
+    public UserAuthDTO toUserAuthDTO(User user) {
+        if (user == null) {
+            return null;
+        }
+
+        return UserAuthDTO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .firstname(user.getFirstname())
+                .lastname(user.getLastname())
+                .email(user.getEmail())
+                .roles(user.getRoles())
+                .build();
+    }
 
     public NewsDTO toNewsDTO(News news) {
         NewsDTO dto = new NewsDTO();

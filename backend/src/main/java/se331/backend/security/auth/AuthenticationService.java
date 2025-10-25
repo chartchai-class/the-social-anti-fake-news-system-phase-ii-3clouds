@@ -1,28 +1,25 @@
-package se331.backend.rest.security.auth;
-
+package se331.backend.security.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import se331.backend.rest.security.config.JwtService;
-import se331.backend.rest.security.token.Token;
-import se331.backend.rest.security.token.TokenRepository;
-import se331.backend.rest.security.token.TokenType;
-import se331.backend.rest.security.user.Role;
-import se331.backend.rest.security.user.User;
-import se331.backend.rest.security.user.UserRepository;
-import se331.rest.util.LabMapper;
-
-import se331.rest.entity.Organizer;
-import se331.rest.repository.OrganizerRepository;
+import se331.backend.entity.UserAuthDTO;
+import se331.backend.security.config.JwtService;
+import se331.backend.security.token.Token;
+import se331.backend.security.token.TokenRepository;
+import se331.backend.security.token.TokenType;
+import se331.backend.security.user.Role;
+import se331.backend.security.user.User;
+import se331.backend.security.user.UserRepository;
+import se331.backend.util.NewsMapper;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,50 +32,35 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final OrganizerRepository organizerRepository;
+
+    @Autowired
+    private NewsMapper newsMapper;
 
     @Transactional
     public AuthenticationResponse register(RegisterRequest request) {
-        // 1. สร้าง Organizer
-        Organizer organizer = Organizer.builder()
-                .name(request.getName())
-                .build();
 
-        // 2. สร้าง User
         User user = User.builder()
                 .firstname(request.getFirstname())
                 .lastname(request.getLastname())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .username(request.getUsername()) // ใช้ username
+                .username(request.getUsername())
                 .roles(List.of(Role.ROLE_USER))
                 .enabled(true)
                 .build();
 
-        // 3. เชื่อมโยง User <-> Organizer (ก่อนบันทึก)
-        user.setOrganizer(organizer);
-        organizer.setUser(user); // ถ้ามี mappedBy ที่ถูกต้อง
-
-        // 4. บันทึก Entity ที่เป็นเจ้าของความสัมพันธ์ (ถ้าไม่มี Cascade)
-        // หรือบันทึกตามลำดับที่ปลอดภัย
-
-        // บันทึก User ก่อน เพราะ Organizer มี FK ชี้มาที่ User
-        // หรือบันทึก Organizer ก่อนก็ได้ ขึ้นอยู่กับว่าใครถือ @JoinColumn
-
-        // วิธีที่ 1: บันทึก User ก่อน (ถ้า Organizer มี FK ชี้ไปที่ User)
         var savedUser = repository.save(user);
-        organizerRepository.save(organizer);
 
-        // 5. สร้าง Token และ Response
         var jwtToken = jwtService.generateToken(savedUser);
         var refreshToken = jwtService.generateRefreshToken(savedUser);
         saveUserToken(savedUser, jwtToken);
 
+        UserAuthDTO userDto = newsMapper.toUserAuthDTO(savedUser);
+
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
-                // เรียกใช้ DTO Mapper จาก savedUser เพื่อความปลอดภัย
-                .user(LabMapper.INSTANCE.getOrganizerAuthDTO(savedUser.getOrganizer()))
+                .user(userDto)
                 .build();
     }
 
@@ -90,16 +72,19 @@ public class AuthenticationService {
                 )
         );
         User user = repository.findByUsername(request.getUsername())
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         String jwtToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
-//    revokeAllUserTokens(user);
+
         saveUserToken(user, jwtToken);
+
+        UserAuthDTO userDto = newsMapper.toUserAuthDTO(user);
+
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
-                .user(LabMapper.INSTANCE.getOrganizerAuthDTO(user.getOrganizer()))
+                .user(userDto)
                 .build();
     }
 
@@ -131,19 +116,21 @@ public class AuthenticationService {
     ) throws IOException {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         final String refreshToken;
-        final String userEmail;
+        final String username;
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return;
         }
         refreshToken = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(refreshToken);
-        if (userEmail != null) {
-            User user = this.repository.findByUsername(userEmail)
-                    .orElseThrow();
+        username = jwtService.extractUsername(refreshToken);
+        if (username != null) {
+            User user = this.repository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
             if (jwtService.isTokenValid(refreshToken, user)) {
                 String accessToken = jwtService.generateToken(user);
                 revokeAllUserTokens(user);
                 saveUserToken(user, accessToken);
+
                 AuthenticationResponse authResponse = AuthenticationResponse.builder()
                         .accessToken(accessToken)
                         .refreshToken(refreshToken)

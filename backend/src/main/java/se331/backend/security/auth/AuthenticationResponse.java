@@ -1,13 +1,11 @@
-package se331.backend.rest.security.auth;
+package se331.backend.security.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import se331.rest.entity.Organizer;
-import se331.rest.entity.OrganizerAuthDTO;
-import se331.rest.entity.OrganizerDTO;
+import se331.backend.entity.UserAuthDTO;
 
 @Data
 @Builder
@@ -20,5 +18,5 @@ public class AuthenticationResponse {
   @JsonProperty("refresh_token")
   private String refreshToken;
 
-  private OrganizerAuthDTO user;
+  private UserAuthDTO user;
 }
