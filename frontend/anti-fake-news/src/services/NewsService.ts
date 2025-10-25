@@ -1,22 +1,27 @@
-import axios from 'axios'
+// src/service/NewsService.ts
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL // http://localhost:8080
+import axios from 'axios';
+
 
 const apiClient = axios.create({
-  baseURL: `${BACKEND_URL}`,
+  baseURL: import.meta.env.VITE_BACKEND_URL,
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 วินาที
-})
+});
 
+// กำหนดฟังก์ชันสำหรับเรียก API ข่าวสาร
 export default {
+  /**
+   * ดึงข้อมูลข่าวสารทั้งหมดจาก backend
+   */
   getNews() {
-    return apiClient.get('/api/news')
-  },
-  getNewsById(id: number) {
-    return apiClient.get(`/api/news/${id}`)
+    return apiClient.get('/api/news');
   },
 
-}
+  getNewsById(id: number) {
+    return apiClient.get(`/api/news/${id}`);
+  },
+
+};
