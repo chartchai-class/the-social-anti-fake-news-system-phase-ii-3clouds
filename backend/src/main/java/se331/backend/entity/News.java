@@ -13,6 +13,8 @@ public class News {
     private Long id;
 
     private String topic;
+
+    @Lob // สำหรับข้อความยาวๆ
     private String shortDetail;
 
     @Lob // สำหรับข้อความยาวๆ
