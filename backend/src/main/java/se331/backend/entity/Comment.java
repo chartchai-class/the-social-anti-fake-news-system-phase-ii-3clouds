@@ -1,9 +1,15 @@
 package se331.backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+//import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.Instant;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 public class Comment {
 
@@ -22,7 +28,7 @@ public class Comment {
     // ความสัมพันธ์: คอมเมนต์หลายอันอยู่ในข่าวเดียว
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "news_id")
-    @JsonIgnore // ป้องกันการวนลูปไม่รู้จบเวลาแปลงเป็น JSON
+    // @JsonIgnore ้องกันการวนลูปไม่รู้จบเวลาแปลงเป็น JSON
     private News news;
 
     // Getters and Setters...
