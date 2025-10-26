@@ -136,8 +136,10 @@
                 Cancel
               </router-link>
               <button 
-                type="submit" 
-                class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg hover:shadow-xl"
+                type="submit"
+                :disabled="isSubmitting || !canSubmit"
+                class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
+                :class="{ 'pointer-events-none': isSubmitting || !canSubmit }"
               >
                 <span class="flex items-center space-x-2">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,6 +149,9 @@
                 </span>
               </button>
             </div>
+            <p v-if="!canSubmit" class="mt-2 text-sm text-red-600">
+              Only members or admins can publish news. Please sign in with the appropriate role.
+            </p>
           </div>
 
         </form>
@@ -163,16 +168,19 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue';
+import { reactive, computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNewsStore } from '../stores/news';
 import { useNotificationStore } from '../stores/notification';
 import ToastNotification from '../components/ToastNotification.vue';
-import type { News } from '../stores/news';
+import type { CreateNewsPayload } from '../stores/news';
+import { useAuthStore } from '../stores/auth';
+import axios from 'axios';
 
 const router = useRouter();
 const newsStore = useNewsStore();
 const notificationStore = useNotificationStore();
+const authStore = useAuthStore();
 
 const formData = reactive({
   topic: '',
@@ -181,6 +189,9 @@ const formData = reactive({
   image: '',
   reporter: '',
 });
+
+const isSubmitting = ref(false);
+const canSubmit = computed(() => authStore.roles.includes('ROLE_MEMBER') || authStore.roles.includes('ROLE_ADMIN'));
 
 const isValidImageUrl = computed(() => {
   if (!formData.image) return false;
@@ -200,17 +211,25 @@ const handleImageError = () => {
   console.warn('Failed to load preview image');
 };
 
-const handleAddNews = () => {
+const handleAddNews = async () => {
+  if (isSubmitting.value) {
+    return;
+  }
+
+  if (!authStore.isAuthenticated || !canSubmit.value) {
+    notificationStore.addNotification('You need a member or admin account to add news.', 'error');
+    return;
+  }
+
+  isSubmitting.value = true;
+
   try {
-    const newNews: Omit<News, 'id'> = {
+    const newNews: CreateNewsPayload = {
       ...formData,
       dateTime: new Date().toISOString(),
-      voteSummary: { real: 0, fake: 0 },
-      comments: [],
-      totalVotes: 0,
     };
-    
-    newsStore.addUnsavedNews(newNews);
+
+    await newsStore.createNews(newNews);
     
     // Show success notification
     notificationStore.addNotification('News added successfully.', 'success');
@@ -227,7 +246,19 @@ const handleAddNews = () => {
     
   } catch (error) {
     console.error('Error adding news:', error);
-    notificationStore.addNotification('Failed to add news. Please try again.', 'error');
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 403) {
+        notificationStore.addNotification('You are not authorized to add news.', 'error');
+      } else if (error.response?.status === 401) {
+        notificationStore.addNotification('Session expired. Please log in again.', 'error');
+      } else {
+        notificationStore.addNotification('Failed to add news. Please try again.', 'error');
+      }
+    } else {
+      notificationStore.addNotification('Failed to add news. Please try again.', 'error');
+    }
+  } finally {
+    isSubmitting.value = false;
   }
 };
 </script>
