@@ -1,15 +1,4 @@
-// src/service/NewsService.ts
-
-import axios from 'axios';
-
-
-const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL,
-  headers: {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-  },
-});
+import apiClient from './AxiosClient';
 
 // กำหนดฟังก์ชันสำหรับเรียก API ข่าวสาร
 export default {
