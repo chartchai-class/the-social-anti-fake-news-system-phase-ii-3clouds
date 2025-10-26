@@ -15,40 +15,39 @@
 
         <div class="flex items-center space-x-2 sm:space-x-4">
 
-          <router-link v-if="canCreateNews" to="/add-news"
-            class="flex items-center space-x-1 px-2 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 text-xs sm:text-sm sm:space-x-2 sm:px-3 md:px-4 md:py-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24"
-              fill="currentColor">
+          <router-link v-if="canCreateNews" to="/add-news" class="flex items-center space-x-1 
+         p-2 sm:p-2 md:px-3 md:py-2  bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 
+         text-xs sm:text-sm sm:space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
               <path
                 d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
             </svg>
-            <span class="font-medium hidden xs:inline sm:inline">Add News</span>
+            <span class="font-medium hidden lg:inline">Add News</span>
           </router-link>
 
-          <router-link v-if="!isLoggedIn" to="/signin" class="px-4 py-2 text-sm sm:text-base font-semibold 
-         bg-blue-500 text-white rounded-lg 
-         hover:bg-blue-700 transition-colors duration-200">
+          <router-link v-if="!isLoggedIn" to="/signin" class="px-4 py-2 text-sm sm:text-base font-semibold
+           bg-blue-500 text-white rounded-lg
+           hover:bg-blue-700 transition-colors duration-200">
             Sign in
           </router-link>
 
-          <div v-else class="flex items-center space-x-2 sm:space-x-4">
+          <div v-else class="flex items-center space-x-3 sm:space-x-4">
 
-            <!-- <router-link v-if="isAdmin" to="/admin/users"
-              class="px-3 py-2 text-sm sm:text-base font-medium text-red-600 bg-red-100 rounded-lg hover:bg-red-200 transition-colors">
-              Admin
-            </router-link> -->
-
-            <span class="text-base font-medium text-gray-700 hidden lg:inline">
-              Hi, {{ userFirstName }}
-            </span>
+            <div class="flex items-center space-x-2 cursor-default">
+              <img :src="userProfileImage || 'https://placehold.co/100x100/CBD5E0/333?text=User'" alt="User Profile"
+                class="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-cover" />
+              <span class="text-sm sm:text-base font-medium text-gray-700 hidden md:inline">
+                Hi, {{ userFirstName }}
+              </span>
+            </div>
 
             <button @click="handleLogout"
-              class="p-2 text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors" title="Logout">
+              class="p-2 text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors hidden sm:inline-block"
+              title="Logout">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
                 <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"
                   d="M23.992 6H6v36h18m9-9l9-9l-9-9m-17 8.992h26" />
               </svg>
-
             </button>
           </div>
         </div>
@@ -70,6 +69,7 @@ const canCreateNews = computed(() => authStore.hasAnyRole(creatorRoles))
 
 const isLoggedIn = computed(() => authStore.isAuthenticated)
 const userFirstName = computed(() => authStore.user?.firstname || authStore.user?.username || 'User')
+const userProfileImage = computed(() => authStore.userProfileImage)
 
 const refreshPage = () => {
   if (router.currentRoute.value.path === '/') {

@@ -22,6 +22,7 @@ public class NewsMapper {
                 .firstname(user.getFirstname())
                 .lastname(user.getLastname())
                 .email(user.getEmail())
+                .profileImage(user.getProfileImage())
                 .roles(user.getRoles())
                 .build();
     }

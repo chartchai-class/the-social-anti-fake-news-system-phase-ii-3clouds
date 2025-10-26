@@ -18,5 +18,6 @@ public class UserAuthDTO {
     String firstname;
     String lastname;
     String email;
+    String profileImage;
     List<Role> roles;
 }
