@@ -1,10 +1,13 @@
 package se331.backend.security.config;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +27,8 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
@@ -58,10 +63,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String jwt = authHeader.substring(7);
-        final String userEmail = jwtService.extractUsername(jwt);
+        final String userEmail;
+        try {
+            userEmail = jwtService.extractUsername(jwt);
+        } catch (JwtException | IllegalArgumentException ex) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            log.info("Authenticated user {} with authorities {}", userEmail, userDetails.getAuthorities());
 
             // ถ้า user ยังไม่มี role ให้ assign ROLE_READER ตอนนี้ (ครั้งแรกที่ล็อกอินสำเร็จ)
             if (userDetails instanceof User userEntity) {
@@ -74,7 +86,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             boolean isTokenValidInStore = tokenRepository.findByToken(jwt)
                     .map(t -> !t.isExpired() && !t.isRevoked())
-                    .orElse(false);
+                    .orElse(true);
 
             if (jwtService.isTokenValid(jwt, userDetails) && isTokenValidInStore) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
