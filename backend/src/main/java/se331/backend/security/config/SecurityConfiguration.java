@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -52,20 +51,20 @@ public class SecurityConfiguration {
 
                             // 3. โหวต/คอมเมนต์ (POST /api/news/{id}/comments)
                             // (READER, MEMBER, ADMIN ทำได้)
-                            .requestMatchers(HttpMethod.POST, "/api/news/**/comments").hasAnyAuthority("ROLE_READER", "ROLE_MEMBER", "ROLE_ADMIN")
+                            .requestMatchers(HttpMethod.POST, "/api/news/{id}/comments").hasAnyRole("READER", "MEMBER", "ADMIN")
 
                             // 4. โพสต์ข่าวใหม่ (POST /api/news)
                             // (MEMBER, ADMIN ทำได้)
-                            .requestMatchers(HttpMethod.POST, "/api/news").hasAnyAuthority("ROLE_MEMBER", "ROLE_ADMIN")
+                            .requestMatchers(HttpMethod.POST, "/api/news").hasAnyRole("MEMBER", "ADMIN")
 
                             // 5. ลบข่าว/คอมเมนต์ (DELETE)
                             // (ADMIN ทำได้)
-                            .requestMatchers(HttpMethod.DELETE, "/api/news/**").hasAuthority("ROLE_ADMIN")
-                            .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasAuthority("ROLE_ADMIN") // (เราต้องสร้าง API นี้)
+                            .requestMatchers(HttpMethod.DELETE, "/api/news/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasRole("ADMIN") // (เราต้องสร้าง API นี้)
 
                             // 6. จัดการ User
                             // (ADMIN ทำได้)
-                            .requestMatchers("/api/v1/users/**").hasAuthority("ROLE_ADMIN")
+                            .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
 
                             // 7. Request อื่นๆ ที่เหลือ - ต้อง Login
                             .anyRequest().authenticated();
