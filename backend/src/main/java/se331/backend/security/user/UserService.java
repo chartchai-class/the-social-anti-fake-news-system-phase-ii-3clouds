@@ -1,6 +1,7 @@
 package se331.backend.security.user;
 
 import jakarta.transaction.Transactional;
+import se331.backend.entity.UserAuthDTO; // ⭐️ Import DTO
 import java.util.List;
 
 public interface UserService {
@@ -10,11 +11,11 @@ public interface UserService {
     User findByUsername(String username);
 
     @Transactional
-    List<User> findAllUsers();
-
-    @Transactional
     User findById(Integer id);
 
     @Transactional
-    User updateUserRole(Integer userId, Role newRole);
+    List<UserAuthDTO> getAllUsers();
+
+    @Transactional
+    UserAuthDTO promoteUserToMember(Integer userId);
 }

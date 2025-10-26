@@ -18,6 +18,7 @@ interface RegisterPayload {
   firstname: string;
   lastname: string;
   email: string;
+  profileImage?: string | null;
   name?: string;
 }
 
