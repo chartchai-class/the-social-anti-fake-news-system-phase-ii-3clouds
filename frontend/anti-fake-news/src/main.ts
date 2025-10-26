@@ -9,6 +9,8 @@ import { inject } from '@vercel/analytics'
 import { useAuthStore, type Role } from './stores/auth'
 inject()
 
+import '@/services/AxiosInterceptorSetup';
+
 const app = createApp(App)
 const pinia = createPinia()
 

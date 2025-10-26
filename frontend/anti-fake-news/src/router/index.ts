@@ -3,7 +3,7 @@ import HomePage from '../views/HomePage.vue'
 import NewsDetail from '../views/NewsDetail.vue'
 import AddNews from '../views/AddNews.vue'
 import LoginView from '@/views/LoginView.vue'
-
+import UserProfile from '@/views/UserProfile.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -33,6 +33,11 @@ const router = createRouter({
       name: 'addNews',
       component: AddNews,
       meta: { requiredRoles: ['ROLE_MEMBER', 'ROLE_ADMIN'] },
+    },
+    {
+      path: '/profile',
+      name: 'user-profile',
+      component: UserProfile,
     },
   ],
 })

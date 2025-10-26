@@ -33,13 +33,15 @@
 
           <div v-else class="flex items-center space-x-3 sm:space-x-4">
 
-            <div class="flex items-center space-x-2 cursor-default">
+            <router-link :to="{ name: 'user-profile' }"
+              class="flex items-center space-x-2 rounded-md p-1 hover:bg-gray-100 transition-colors duration-200"
+              title="View Profile">
               <img :src="userProfileImage || 'https://placehold.co/100x100/CBD5E0/333?text=User'" alt="User Profile"
                 class="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-cover" />
               <span class="text-sm sm:text-base font-medium text-gray-700 hidden md:inline">
                 Hi, {{ userFirstName }}
               </span>
-            </div>
+            </router-link>
 
             <button @click="handleLogout"
               class="p-2 text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors hidden sm:inline-block"
