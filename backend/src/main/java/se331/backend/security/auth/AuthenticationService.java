@@ -40,8 +40,8 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .username(request.getUsername())
-                .roles(List.of(Role.ROLE_READER))
-                .enabled(true)
+                .profileImage(request.getProfileImage())
+                .roles(List.of(Role.ROLE_READER)) // Role เริ่มต้นคือ READER                .enabled(true)
                 .build();
 
         var savedUser = repository.save(user);

@@ -15,7 +15,6 @@ public class RegisterRequest {
   private String lastname;
   private String email;
   private String password;
-
-  private String username; // เพิ่ม username เพราะ authenticate ใช้ username
-  private String name; // เพิ่มสำหรับ Organizer
+  private String username;
+  private String profileImage;
 }

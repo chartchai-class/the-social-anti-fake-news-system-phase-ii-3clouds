@@ -32,12 +32,79 @@ public class InitApp implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        // เรียก initDefaultUsers (เพื่อให้มี User ก่อนสร้าง News)
+        initDefaultUsers();
+
+        // สร้าง News
         if (newsDao.findAll().isEmpty()) {
             System.out.println("No news found. Initializing sample data...");
             initSampleData();
         } else {
-            System.out.println("Database already populated.");
+            System.out.println("Database already populated (News).");
         }
+    }
+
+    private void initDefaultUsers() {
+        System.out.println("Initializing default users...");
+        seedUserIfMissing(
+                "admin",
+                "admin@app.com",
+                "Admin",
+                "User",
+                "admin",
+                "https://placehold.co/100x100/FF0000/FFF?text=ADMIN",
+                List.of(Role.ROLE_ADMIN, Role.ROLE_MEMBER, Role.ROLE_READER) // Admin มีทุก Role
+        );
+        seedUserIfMissing(
+                "member",
+                "member@app.com",
+                "Member",
+                "User",
+                "member",
+                "https://placehold.co/100x100/00FF00/FFF?text=MEMBER",
+                List.of(Role.ROLE_MEMBER, Role.ROLE_READER) // Member มี 2 Roles
+        );
+        seedUserIfMissing(
+                "reader",
+                "reader@app.com",
+                "Reader",
+                "User",
+                "reader",
+                "https://placehold.co/100x100/0000FF/FFF?text=READER",
+                List.of(Role.ROLE_READER) // Reader มี Role เดียว
+        );
+        System.out.println("Default users initialization check complete.");
+    }
+
+    private void seedUserIfMissing(
+            String username,
+            String email,
+            String firstname,
+            String lastname,
+            String rawPassword,
+            String profileImage,
+            List<Role> roles // รับเป็น List
+    ) {
+        Optional<User> existing = userRepository.findByUsername(username);
+        if (existing.isPresent()) {
+            System.out.println("User '" + username + "' already exists.");
+            return; // ถ้ามีอยู่แล้ว ไม่ต้องทำอะไร
+        }
+
+        // ถ้ายังไม่มี ให้สร้างใหม่
+        User user = User.builder()
+                .username(username)
+                .email(email)
+                .firstname(firstname)
+                .lastname(lastname)
+                .password(passwordEncoder.encode(rawPassword))
+                .profileImage(profileImage)
+                .roles(roles)
+                .enabled(true)
+                .build();
+
+        userRepository.save(user);
+        System.out.println("Created user: " + username + " with roles: " + roles);
     }
 
     private void initSampleData() {
