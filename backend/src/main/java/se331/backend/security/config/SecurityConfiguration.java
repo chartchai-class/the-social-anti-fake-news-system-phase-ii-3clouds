@@ -42,15 +42,32 @@ public class SecurityConfiguration {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf((crsf) -> crsf.disable())
                 .authorizeHttpRequests((authorize) -> {
-                    authorize.requestMatchers("/api/v1/auth/**").permitAll()
-                            .requestMatchers(HttpMethod.GET, "/api/news").permitAll()       // อนุญาตดึงข่าวทั้งหมด
-                            .requestMatchers(HttpMethod.GET, "/api/news/**").permitAll()   // อนุญาตดึงข่าวเดียว (เช่น /api/news/1)
-                            .requestMatchers(HttpMethod.POST, "/api/v1/news/**")
-                            .hasAnyRole("MEMBER", "ADMIN")                       // ✅ MEMBER, ADMIN โพสต์ข่าวได้
-                            .requestMatchers(HttpMethod.POST, "/api/v1/vote/**")
-                            .hasAnyRole("READER", "MEMBER", "ADMIN")             // ✅ ต้อง login ถึงโหวตได้
-                            .requestMatchers(HttpMethod.DELETE, "/api/v1/news/**")
-                            .hasRole("ADMIN")                                    // ✅ ADMIN เท่านั้นที่ลบข่าวได้
+                    authorize
+                            // 1. Auth API (Login/Register) - เปิดสาธารณะ
+                            .requestMatchers("/api/v1/auth/**").permitAll()
+
+                            // 2. อ่าน News (GET) - เปิดสาธารณะ
+                            .requestMatchers(HttpMethod.GET, "/api/news").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/api/news/**").permitAll()
+
+                            // 3. โหวต/คอมเมนต์ (POST /api/news/{id}/comments)
+                            // (READER, MEMBER, ADMIN ทำได้)
+                            .requestMatchers(HttpMethod.POST, "/api/news/**/comments").hasAnyAuthority("ROLE_READER", "ROLE_MEMBER", "ROLE_ADMIN")
+
+                            // 4. โพสต์ข่าวใหม่ (POST /api/news)
+                            // (MEMBER, ADMIN ทำได้)
+                            .requestMatchers(HttpMethod.POST, "/api/news").hasAnyAuthority("ROLE_MEMBER", "ROLE_ADMIN")
+
+                            // 5. ลบข่าว/คอมเมนต์ (DELETE)
+                            // (ADMIN ทำได้)
+                            .requestMatchers(HttpMethod.DELETE, "/api/news/**").hasAuthority("ROLE_ADMIN")
+                            .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasAuthority("ROLE_ADMIN") // (เราต้องสร้าง API นี้)
+
+                            // 6. จัดการ User
+                            // (ADMIN ทำได้)
+                            .requestMatchers("/api/v1/users/**").hasAuthority("ROLE_ADMIN")
+
+                            // 7. Request อื่นๆ ที่เหลือ - ต้อง Login
                             .anyRequest().authenticated();
                 })
                 .authenticationProvider(authenticationProvider)
