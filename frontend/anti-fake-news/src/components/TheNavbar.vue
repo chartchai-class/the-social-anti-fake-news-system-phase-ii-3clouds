@@ -25,9 +25,10 @@
             <span class="font-medium hidden xs:inline sm:inline">Add News</span>
           </router-link>
 
-          <router-link v-if="!isLoggedIn" to="/login"
-            class="px-3 py-2 text-sm sm:text-base font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-            Login
+          <router-link v-if="!isLoggedIn" to="/signin" class="px-4 py-2 text-sm sm:text-base font-semibold 
+         bg-blue-500 text-white rounded-lg 
+         hover:bg-blue-700 transition-colors duration-200">
+            Sign in
           </router-link>
 
           <div v-else class="flex items-center space-x-2 sm:space-x-4">
@@ -43,7 +44,10 @@
 
             <button @click="handleLogout"
               class="p-2 text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors" title="Logout">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M23.992 6H6v36h18m9-9l9-9l-9-9m-17 8.992h26"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
+                <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"
+                  d="M23.992 6H6v36h18m9-9l9-9l-9-9m-17 8.992h26" />
+              </svg>
 
             </button>
           </div>

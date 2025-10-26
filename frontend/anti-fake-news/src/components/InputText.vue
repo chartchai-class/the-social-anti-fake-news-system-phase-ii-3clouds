@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import UniqueID from '@/features/UniqueID'
-// import ErrorMessage from '@/components/ErrorMessage.vue'
+import UniqueID from '../features/UniqueID'
+import ErrorMessage from './ErrorMessage.vue'
 
 import { computed } from 'vue'
 

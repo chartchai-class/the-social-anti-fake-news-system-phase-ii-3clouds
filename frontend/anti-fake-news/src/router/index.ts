@@ -9,8 +9,8 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: '/login',
-      name: 'login',
+      path: '/signin',
+      name: 'signin',
       component: LoginView
     },
     {

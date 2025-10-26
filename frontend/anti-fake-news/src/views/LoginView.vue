@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import InputText from '@/components/InputText.vue';
+import InputText from '../components/InputText.vue';
 import * as yup from 'yup';
 import { useField, useForm } from 'vee-validate';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
-import { useMessageStore } from '@/stores/message';
+import { useMessageStore } from '../stores/message';
 
 // --- Validation Schema ---
 // (ใช้ Username แทน Email)
@@ -43,22 +43,30 @@ const onSubmit = handleSubmit(async (values) => {
         await authStore.login(values.username, values.password);
 
         // แสดงข้อความ Success ชั่วครู่ (Optional)
-        messageStore.updateMessage('Login successful!', 'success');
+        messageStore.updateMessage('Login successful!');
         setTimeout(() => messageStore.resetMessage(), 2000);
 
         // Redirect ไปหน้าแรก (News List)
         await router.push({ name: 'home' }); // (ตรวจสอบว่า Route ชื่อ 'home' หรือ '/')
 
-    } catch (err: any) {
-        // แสดง Error จาก Backend (ถ้ามี) หรือข้อความทั่วไป
-        const errorMessage = err.response?.data?.message || 'Login failed. Invalid username or password.';
-        messageStore.updateMessage(errorMessage, 'error');
-
-        // ตั้งเวลาลบข้อความ Error
+    } catch (err: unknown) {
+        // ต้องทำการตรวจสอบประเภท (Type Assertion หรือ Type Guard) ก่อนเข้าถึงคุณสมบัติ
         setTimeout(() => {
             messageStore.resetMessage();
-        }, 4000);
-        console.error('Login error:', err);
+        }, 3000);
+        let errorMessage = 'Login failed. Please try again.';
+
+        // ตรวจสอบว่าเป็น Axios Error หรือ Error ที่มีโครงสร้าง 'response.data.message'
+        if (typeof err === 'object' && err !== null && 'response' in err) {
+            const apiError = err as { response?: { data?: { message?: string } } };
+            errorMessage = apiError.response?.data?.message || 'Login failed. Invalid username or password.';
+
+            setTimeout(() => {
+                messageStore.resetMessage();
+            }, 3000);
+        }
+
+        messageStore.updateMessage(errorMessage);
 
     } finally {
         isSubmitting.value = false;
@@ -67,11 +75,8 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-    <div class="flex min-h-full flex-1 flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
-        <div v-if="messageStore.message" class="fixed top-5 right-5 z-50 p-4 rounded-md shadow-lg"
-            :class="messageStore.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'">
-            {{ messageStore.message }}
-        </div>
+    <div class="flex min-h-full flex-1 flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-70">
+
 
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
             <img class="mx-auto h-16 w-auto" src="/logo.png" alt="3Clouds News Logo" />
@@ -132,14 +137,18 @@ const onSubmit = handleSubmit(async (values) => {
                 </div>
 
                 <p class="mt-6 text-center text-sm text-gray-500">
-                    Not a member yet?
+                    Don't have an account?
                     {{ ' ' }}
                     <RouterLink :to="{ name: 'register' }"
                         class="font-semibold leading-6 text-blue-600 hover:text-blue-500">
-                        Register here
+                        Register now
                     </RouterLink>
                 </p>
 
+            </div>
+            <div v-if="messageStore.message"
+                class="mt-6 p-4 rounded-lg shadow-md bg-red-100 border border-red-400 text-red-700 text-sm  text-center font-medium transition-opacity duration-300 ">
+                {{ messageStore.message }}
             </div>
         </div>
     </div>
