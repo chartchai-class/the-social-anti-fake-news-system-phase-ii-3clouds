@@ -36,11 +36,16 @@ public class NewsMapper {
         dto.setFullDetail(news.getFullDetail());
         dto.setImage(news.getImage());
         dto.setReporter(news.getReporter());
-        dto.setDateTime(news.getDateTime().toString());
+        dto.setDateTime(
+                news.getDateTime() != null
+                        ? news.getDateTime().toString()
+                        : null
+        );
 
-        List<CommentDTO> commentDTOs = news.getComments().stream()
+        List<Comment> comments = news.getComments();
+        List<CommentDTO> commentDTOs = (comments == null ? List.<CommentDTO>of() : comments.stream()
                 .map(this::toCommentDTO)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
         dto.setComments(commentDTOs);
 
         VoteSummaryDTO summary = new VoteSummaryDTO(news.getRealVotes(), news.getFakeVotes());

@@ -2,13 +2,16 @@ package se331.backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import se331.backend.dao.NewsDao;
 import se331.backend.entity.*;
 import se331.backend.util.NewsMapper;
 
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,7 +60,22 @@ public class NewsServiceImpl implements NewsService {
         news.setFullDetail(request.getFullDetail());
         news.setImage(request.getImage());
         news.setReporter(request.getReporter());
-        news.setDateTime(Instant.parse(request.getDateTime()));
+        String rawDateTime = request.getDateTime();
+        Instant createdAt;
+        if (rawDateTime == null || rawDateTime.isBlank()) {
+            createdAt = Instant.now();
+        } else {
+            try {
+                createdAt = Instant.parse(rawDateTime);
+            } catch (DateTimeParseException ex) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid dateTime format. Expecting ISO-8601, e.g. 2024-05-01T12:34:56Z",
+                        ex
+                );
+            }
+        }
+        news.setDateTime(createdAt);
 
         News savedNews = newsDao.save(news); // เรียกผ่าน DAO
         return newsMapper.toNewsDTO(savedNews);
