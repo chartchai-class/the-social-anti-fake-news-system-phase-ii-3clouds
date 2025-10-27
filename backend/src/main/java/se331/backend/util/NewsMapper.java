@@ -1,10 +1,11 @@
 package se331.backend.util;
 
 import se331.backend.entity.*;
-
 import org.springframework.stereotype.Component;
 import se331.backend.security.user.User;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,6 @@ public class NewsMapper {
         NewsDTO dto = new NewsDTO();
         dto.setId(news.getId());
         dto.setTopic(news.getTopic());
-
         dto.setShortDetail(news.getShortDetail());
         dto.setFullDetail(news.getFullDetail());
         dto.setImage(news.getImage());
@@ -52,42 +52,31 @@ public class NewsMapper {
         dto.setVoteSummary(summary);
         dto.setTotalVotes(news.getRealVotes() + news.getFakeVotes());
 
-//        VoteSummaryDTO summary = calculateVoteSummary(news.getComments());
-//        dto.setVoteSummary(summary);
-//        dto.setTotalVotes((int) (summary.getReal() + summary.getFake()));
-//        dto.setStatus(calculateStatus(summary));
-
         return dto;
     }
 
     public CommentDTO toCommentDTO(Comment comment) {
         CommentDTO dto = new CommentDTO();
         dto.setId(comment.getId());
-        dto.setUser(comment.getUsername());
+        dto.setUsername(comment.getUsername());
         dto.setText(comment.getText());
         dto.setImage(comment.getImage());
-        dto.setTime(comment.getTime().toString());
-        dto.setVote(comment.getVote().name().toLowerCase());
-        return dto;
-    }
 
-//    private VoteSummaryDTO calculateVoteSummary(List<Comment> comments) {
-//        long realVotes = comments.stream()
-//                .filter(c -> c.getVote() == Vote.REAL)
-//                .count();
-//        long fakeVotes = comments.stream()
-//                .filter(c -> c.getVote() == Vote.FAKE)
-//                .count();
-//        return new VoteSummaryDTO(realVotes, fakeVotes);
-//    }
-
-    private String calculateStatus(VoteSummaryDTO summary) {
-        if (summary.getReal() > summary.getFake()) {
-            return "not fake";
-        } else if (summary.getReal() < summary.getFake()) {
-            return "fake";
-        } else {
-            return "equal";
+        // แปลง Instant เป็น String
+        if (comment.getTime() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter
+                    .ofPattern("yyyy-MM-dd HH:mm:ss")
+                    .withZone(ZoneId.systemDefault());
+            dto.setTime(formatter.format(comment.getTime()));
         }
+
+        // แปลง Vote เป็น lowercase
+        dto.setVote(comment.getVote() != null ? comment.getVote().name().toLowerCase() : null);
+
+        if (comment.getNews() != null) {
+            dto.setNewsId(comment.getNews().getId());
+        }
+
+        return dto;
     }
 }

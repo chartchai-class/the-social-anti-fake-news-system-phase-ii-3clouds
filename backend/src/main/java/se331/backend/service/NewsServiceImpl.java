@@ -88,7 +88,7 @@ public class NewsServiceImpl implements NewsService {
                 .orElseThrow(() -> new EntityNotFoundException("News not found with id: " + newsId));
 
         Comment comment = new Comment();
-        comment.setUsername(request.getUser());
+        comment.setUsername(request.getUsername());
         comment.setText(request.getText());
         comment.setImage(request.getImage());
         comment.setTime(Instant.now());
@@ -96,7 +96,7 @@ public class NewsServiceImpl implements NewsService {
         comment.setNews(news);
 
         // 1. เพิ่มคอมเมนต์ลง List
-        news.getComments().add(comment);
+        news.addComment(comment);
 
         // 2.อัปเดตคะแนนโหวตใน News
         if (comment.getVote() == Vote.REAL) {
