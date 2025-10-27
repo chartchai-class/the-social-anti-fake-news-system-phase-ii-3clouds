@@ -12,7 +12,7 @@ import se331.backend.dao.CommentDAO;
 public class CommentServiceImpl implements CommentService {
 
     @Autowired
-    private CommentDAO commentDAO; 
+    private CommentDAO commentDAO;
 
     @Override
     @Transactional

@@ -55,6 +55,7 @@ public class SecurityConfiguration {
                             // 4. โหวต/คอมเมนต์ (POST /api/comments)
                             // เปลี่ยนจาก /api/news/*/comments เป็น /api/comments
                             .requestMatchers(HttpMethod.POST, "/api/comments").hasAnyRole("READER", "MEMBER", "ADMIN")
+                            .requestMatchers(HttpMethod.POST, "/uploadFile").hasAnyRole("READER", "MEMBER", "ADMIN")
 
                             // 5. โพสต์ข่าวใหม่ (POST /api/news)
                             .requestMatchers(HttpMethod.POST, "/api/news").hasAnyRole("MEMBER", "ADMIN")
@@ -68,8 +69,10 @@ public class SecurityConfiguration {
                             // 8. จัดการ User
                             .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
 
+
                             // 9. Request อื่นๆ ที่เหลือ - ต้อง Login
                             .anyRequest().authenticated();
+
                 })
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

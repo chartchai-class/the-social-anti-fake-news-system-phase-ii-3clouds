@@ -19,6 +19,15 @@ spring:
     multipart:
       max-file-size: 10MB
 
+supabase:
+  storage:
+    endpoint: https://mainpphpojnagcuvfpqo.storage.supabase.co/storage/v1/s3
+    endpoint_output: https://mainpphpojnagcuvfpqo.storage.supabase.co/storage/v1/object/public
+    bucket: project img
+    region: ap-southeast-1
+    accessKey: 768d163f1e8fb08c0e42c99f434da1ba
+    secretKey: 49762e599f7147bd4caf2c6fde4f16f82b92f0ac439ad1c82de8a6836433179c
+
 application:
   security:
     jwt:
