@@ -122,7 +122,7 @@
         <VoteSection
             v-else-if="activeTab === 'vote' && canViewVoteTab"
             :news="news"
-            @submit-vote="handleVoteSubmission"
+            @vote-success="handleVoteSuccess"
         />
         
         </div>
@@ -154,17 +154,16 @@ import { useNotificationStore } from '../stores/notification';
 import { useAuthStore, type Role } from '../stores/auth';
 import CommentsSection from '../components/CommentsVotes.vue';
 import VoteSection from '../components/VoteSection.vue';
-import type { Vote } from '../stores/news';
 
 const route = useRoute();
 const newsStore = useNewsStore();
 const notificationStore = useNotificationStore();
 const authStore = useAuthStore();
 
-// **แก้ไข: ใช้ parseFloat เพื่อรองรับ ID ที่เป็นตัวเลขทศนิยม**
+// ใช้ parseFloat เพื่อรองรับ ID ที่เป็นตัวเลขทศนิยม
 const newsId = parseFloat(route.params.id as string);
 
-// **แก้ไข: ดึงข้อมูลข่าวโดยใช้ Getter จาก Store**
+// ดึงข้อมูลข่าวโดยใช้ Getter จาก Store
 const news = computed(() => newsStore.getNewsById(newsId));
 
 const activeTab = ref<'comments' | 'vote'>('comments');
@@ -177,7 +176,6 @@ const allowedVoteRoles: Role[] = ['ROLE_READER', 'ROLE_MEMBER', 'ROLE_ADMIN'];
 const canViewVoteTab = computed(() => authStore.hasAnyRole(allowedVoteRoles));
 
 const loadingProgress = ref(0);
-// let progressInterval: NodeJS.Timeout | null = null;
 let progressInterval: ReturnType<typeof setTimeout> | null = null
 
 const startLoadingProgress = () => {
@@ -207,7 +205,7 @@ const loadNewsDetail = async () => {
     isLoading.value = true;
     startLoadingProgress();
     
-    // **เปลี่ยนมาใช้ fetchNews() จาก Store**
+    // เปลี่ยนมาใช้ fetchNews() จาก Store
     await Promise.all([
       newsStore.fetchNews(),
       new Promise(resolve => setTimeout(resolve, 800))
@@ -278,39 +276,19 @@ const switchTab = async (tab: 'comments' | 'vote') => {
   }
 };
 
-const handleVoteSubmission = async (data: {
-  userName: string;
-  vote: Vote;
-  commentText: string;
-  imageUrl: string | null;
-}) => {
+const handleVoteSuccess = async () => {
   try {
-    if (!canViewVoteTab.value) {
-      notificationStore.addNotification('You do not have permission to vote on this news.', 'error');
-      return;
-    }
-
-    // Removed loadingStore usage for vote submission
+    // โหลดข้อมูลข่าวใหม่
+    await newsStore.fetchNews();
     
-    newsStore.addCommentToNews(
-      newsId,
-      data.userName || 'Anonymous',
-      data.commentText || '',
-      data.imageUrl,
-      data.vote
-    );
+    // หน่วงเวลา 1 วินาที (1000 มิลลิวินาที) ก่อนเปลี่ยน tab
+    await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Simulate submission processing
-    await new Promise(resolve => setTimeout(resolve,300));
-    
-    notificationStore.addNotification('Vote submitted successfully.', 'success');
-    
-    // Switch to comments tab with loading animation
+    // เปลี่ยนไปที่ tab comments
     await switchTab('comments');
     
   } catch (error) {
-    console.error('Error submitting vote:', error);
-    notificationStore.addNotification('Error submitting vote', 'error');
+    console.error('Error after vote submission:', error);
   }
 };
 

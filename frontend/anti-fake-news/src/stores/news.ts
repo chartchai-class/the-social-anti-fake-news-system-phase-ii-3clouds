@@ -3,7 +3,7 @@ import apiClient from '../services/NewsService';
 
 export interface Comment {
   id: number;
-  user: string;
+  username: string;
   text: string;
   image: string | null;
   time: string;
