@@ -10,8 +10,12 @@ import { useMessageStore } from '../stores/message';
 // --- Validation Schema ---
 // (ใช้ Username แทน Email)
 const validationSchema = yup.object({
-    username: yup.string().required('Username is required'),
-    password: yup.string().required('Password is required')
+    identifier: yup
+        .string()
+        .required('Username or Email is required'),
+    password: yup
+        .string()
+        .required('Password is required')
 });
 
 // --- Form Handling (VeeValidate) ---
@@ -24,7 +28,7 @@ const { errors, handleSubmit } = useForm({
 });
 
 // --- Form Fields ---
-const { value: username } = useField<string>('username');
+const { value: identifier } = useField<string>('identifier');
 const { value: password } = useField<string>('password');
 
 // --- Stores and Router ---
@@ -32,51 +36,49 @@ const authStore = useAuthStore();
 const router = useRouter();
 const messageStore = useMessageStore(); // (Store สำหรับแสดง Error)
 const isSubmitting = ref(false); // (State สำหรับ Loading ตอนกด Login)
+const messageType = ref<'success' | 'error' | null>(null);
 
 // --- Submit Handler ---
 const onSubmit = handleSubmit(async (values) => {
     isSubmitting.value = true;
-    messageStore.resetMessage(); // เคลียร์ข้อความเก่า (ถ้ามี)
+    messageStore.resetMessage();
 
     try {
-        // เรียก login action จาก authStore
-        await authStore.login(values.username, values.password);
+        await authStore.login(values.identifier, values.password);
 
-        // แสดงข้อความ Success ชั่วครู่ (Optional)
+        messageType.value = 'success';
         messageStore.updateMessage('Login successful!');
         setTimeout(() => messageStore.resetMessage(), 2000);
 
-        // Redirect ไปหน้าแรก (News List)
-        await router.push({ name: 'home' }); // (ตรวจสอบว่า Route ชื่อ 'home' หรือ '/')
+        await router.push({ name: 'home' });
 
     } catch (err: unknown) {
-        // ต้องทำการตรวจสอบประเภท (Type Assertion หรือ Type Guard) ก่อนเข้าถึงคุณสมบัติ
-        setTimeout(() => {
-            messageStore.resetMessage();
-        }, 3000);
+        messageType.value = 'error';
         let errorMessage = 'Login failed. Please try again.';
 
-        // ตรวจสอบว่าเป็น Axios Error หรือ Error ที่มีโครงสร้าง 'response.data.message'
         if (typeof err === 'object' && err !== null && 'response' in err) {
             const apiError = err as { response?: { data?: { message?: string } } };
             errorMessage = apiError.response?.data?.message || 'Login failed. Invalid username or password.';
-
-            setTimeout(() => {
-                messageStore.resetMessage();
-            }, 3000);
         }
 
         messageStore.updateMessage(errorMessage);
+        setTimeout(() => messageStore.resetMessage(), 3000);
 
     } finally {
         isSubmitting.value = false;
     }
 });
+
 </script>
 
 <template>
     <div class="flex min-h-full flex-1 flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-70">
 
+        <div v-if="messageStore.message"
+            class="fixed top-5 right-5 z-50 p-4 rounded-md shadow-lg text-white transition-all duration-300"
+            :class="messageType === 'success' ? 'bg-green-600' : 'bg-red-600'">
+            {{ messageStore.message }}
+        </div>
 
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
             <img class="mx-auto h-16 w-auto" src="/logo.png" alt="3Clouds News Logo" />
@@ -91,13 +93,14 @@ const onSubmit = handleSubmit(async (values) => {
 
                 <form class="mt-8 space-y-6" @submit.prevent="onSubmit" novalidate>
                     <div>
-                        <label for="username" class="block text-sm font-medium text-left leading-6 text-gray-900">
-                            Username
+                        <label for="identifier" class="block text-sm font-medium text-left leading-6 text-gray-900">
+                            Username or Email
                         </label>
                         <div class="mt-2">
-                            <InputText id="username" type="text" v-model="username" placeholder="Your Username"
-                                :error="errors['username']" />
+                            <InputText id="identifier" type="text" v-model="identifier" placeholder="Username or Email"
+                                :error="errors['identifier']" />
                         </div>
+
                     </div>
 
                     <div>
@@ -146,10 +149,7 @@ const onSubmit = handleSubmit(async (values) => {
                 </p>
 
             </div>
-            <div v-if="messageStore.message"
-                class="mt-6 p-4 rounded-lg shadow-md bg-red-100 border border-red-400 text-red-700 text-sm  text-center font-medium transition-opacity duration-300 ">
-                {{ messageStore.message }}
-            </div>
+
         </div>
     </div>
 </template>

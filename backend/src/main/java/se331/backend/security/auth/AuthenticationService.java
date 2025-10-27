@@ -32,7 +32,16 @@ public class AuthenticationService {
     private NewsMapper newsMapper;
 
     @Transactional
-    public AuthenticationResponse register(RegisterRequest request) {
+    public RegistrationResult register(RegisterRequest request) {
+
+        // 1. Check if username already exists
+        if (repository.findByUsername(request.getUsername()).isPresent()) {
+            return RegistrationResult.failure("Username already exists: " + request.getUsername());
+        }
+        // 2. Check if email already exists
+        if (repository.findByEmail(request.getEmail()).isPresent()) {
+            return RegistrationResult.failure("Email already exists: " + request.getEmail());
+        }
 
         User user = User.builder()
                 .firstname(request.getFirstname())
@@ -41,7 +50,8 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .username(request.getUsername())
                 .profileImage(request.getProfileImage())
-                .roles(List.of(Role.ROLE_READER)) // Role เริ่มต้นคือ READER                .enabled(true)
+                .roles(List.of(Role.ROLE_READER)) // Role เริ่มต้นคือ READER
+                .enabled(true)
                 .build();
 
         var savedUser = repository.save(user);
@@ -51,24 +61,31 @@ public class AuthenticationService {
 
         UserAuthDTO userDto = newsMapper.toUserAuthDTO(savedUser);
 
-        return AuthenticationResponse.builder()
+        // สร้าง AuthenticationResponse สำหรับกรณี Success
+        AuthenticationResponse authResponse = AuthenticationResponse.builder()
                 .accessToken(jwtToken)
+                // ไม่ส่ง refreshToken ตอน register
                 .user(userDto)
                 .build();
+
+        return RegistrationResult.success(authResponse);
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        // หา user
+        User user = repository.findByUsername(request.getIdentifier())
+                .or(() -> repository.findByEmail(request.getIdentifier()))
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // ตรวจสอบ password ด้วย AuthenticationManager
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
+                        user.getUsername(),
                         request.getPassword()
                 )
         );
-        User user = repository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
 
         String jwtToken = jwtService.generateToken(user);
-
         saveUserToken(user, jwtToken);
 
         UserAuthDTO userDto = newsMapper.toUserAuthDTO(user);
@@ -90,4 +107,21 @@ public class AuthenticationService {
         tokenRepository.save(token);
     }
 
+    /**
+     * ตรวจสอบว่า Username นี้มีอยู่แล้วหรือไม่
+     * @param username ชื่อที่ต้องการตรวจสอบ
+     * @return true ถ้ามีอยู่แล้ว, false ถ้ายังไม่มี
+     */
+    public boolean isUsernameTaken(String username) {
+        return repository.findByUsername(username).isPresent();
+    }
+
+    /**
+     * ตรวจสอบว่า Email นี้มีอยู่แล้วหรือไม่
+     * @param email อีเมลที่ต้องการตรวจสอบ
+     * @return true ถ้ามีอยู่แล้ว, false ถ้ายังไม่มี
+     */
+    public boolean isEmailTaken(String email) {
+        return repository.findByEmail(email).isPresent();
+    }
 }
