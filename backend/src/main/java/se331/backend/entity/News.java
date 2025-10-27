@@ -49,4 +49,16 @@ public class News {
             fakeVotes++;
         }
     }
+
+    // Helper method สำหรับลบ comment พร้อมปรับยอดโหวต
+    public void removeComment(Comment comment) {
+        if (comments.remove(comment)) {
+            if (comment.getVote() == Vote.REAL && realVotes > 0) {
+                realVotes--;
+            } else if (comment.getVote() == Vote.FAKE && fakeVotes > 0) {
+                fakeVotes--;
+            }
+            comment.setNews(null);
+        }
+    }
 }
