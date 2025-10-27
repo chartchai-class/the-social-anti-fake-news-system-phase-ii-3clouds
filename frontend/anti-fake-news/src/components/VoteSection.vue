@@ -43,7 +43,7 @@
       </div>
 
       <div class="mb-6">
-        <ImageUpload v-model="voterImages" :max-files="1" field-name="image" />
+        <ImageUpload v-model="voterImages" :max-files="1" />
       </div>
 
       <button
@@ -119,19 +119,23 @@ const props = defineProps<{
   news: News
 }>();
 
+const emit = defineEmits<{
+  'vote-success': []
+}>();
+
 const newsStore = useNewsStore();
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
 
 const selectedVote = ref<'fake' | 'real' | null>(null);
 const voterComment = ref<string>('');
-const voterImages = ref<string[]>([]);  // ✅ Changed to array
+const voterImages = ref<string[]>([]);
 const isSubmitting = ref(false);
 
 // ดึง username จาก authStore
 const username = computed(() => authStore.user?.username || 'Anonymous');
 
-// ✅ Computed property to get first image or empty string
+// Computed property to get first image or empty string
 const voterImage = computed(() => voterImages.value[0] || '');
 
 const fakeVotes = computed(() => props.news.voteSummary?.fake || 0);
@@ -155,24 +159,25 @@ const submitVote = async () => {
     notificationStore.addNotification('Please select your vote (Real or Fake)', 'error');
     return;
   }
-  
+
   isSubmitting.value = true;
 
   try {
     // ตรวจสอบว่าเป็นข่าวที่บันทึกแล้ว (id > 0) หรือยัง (id < 0)
     if (props.news.id > 0) {
-      // ส่งไปยัง API - ใช้ voterImage.value แทน
+      // ส่งไปยัง API
       const result = await newsStore.submitComment(props.news.id, {
         username: username.value,
         text: voterComment.value,
-        image: voterImage.value,  // ✅ This now gets first image from array
+        image: voterImage.value,
         vote: selectedVote.value
       });
 
       if (result.success) {
         notificationStore.addNotification('Vote submitted successfully!', 'success');
         resetForm();
-        scrollToComments();
+        // Emit event เพื่อบอก parent component ว่า vote สำเร็จแล้ว
+        emit('vote-success');
       } else {
         notificationStore.addNotification(result.error || 'Failed to submit vote', 'error');
       }
@@ -182,13 +187,14 @@ const submitVote = async () => {
         props.news.id,
         username.value,
         voterComment.value,
-        voterImage.value || null,  // ✅ This now gets first image from array
+        voterImage.value || null,
         selectedVote.value
       );
-      notificationStore.addNotification('Vote added locally!', 'success');
       resetForm();
-      scrollToComments();
+      // Emit event เพื่อบอก parent component ว่า vote สำเร็จแล้ว
+      emit('vote-success');
     }
+
   } catch (error) {
     console.error('Error submitting vote:', error);
     notificationStore.addNotification('Failed to submit vote. Please try again.', 'error');
@@ -197,18 +203,9 @@ const submitVote = async () => {
   }
 };
 
-const scrollToComments = () => {
-  setTimeout(() => {
-    const commentsSection = document.querySelector('#comments-section');
-    if (commentsSection) {
-      commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, 500);
-};
-
 const resetForm = () => {
   selectedVote.value = null;
   voterComment.value = '';
-  voterImages.value = [];  // ✅ Reset array
+  voterImages.value = [];
 };
 </script>
