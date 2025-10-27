@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface NewsService {
     List<NewsDTO> getAllNews(String statusFilter);
+    List<NewsDTO> getRemovedNews();
     NewsDTO getNewsById(Long id);
     NewsDTO createNews(CreateNewsRequest request);
     NewsDTO addCommentToNews(Long newsId, CreateCommentRequest request);

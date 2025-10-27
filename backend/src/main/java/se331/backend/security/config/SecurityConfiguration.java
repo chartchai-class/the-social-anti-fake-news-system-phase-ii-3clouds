@@ -48,7 +48,10 @@ public class SecurityConfiguration {
                             // 1. Auth API (Login/Register) - เปิดสาธารณะ
                             .requestMatchers("/api/v1/auth/**").permitAll()
 
-                            // 2. อ่าน News (GET) - เปิดสาธารณะ
+                            // 2. อ่าน News (GET)
+                            // removed จำเป็นต้องเป็น admin
+                            .requestMatchers(HttpMethod.GET, "/api/news/removed").hasRole("ADMIN")
+                            // เปิดสาธารณะสำหรับข่าวทั่วไป
                             .requestMatchers(HttpMethod.GET, "/api/news").permitAll()
                             .requestMatchers(HttpMethod.GET, "/api/news/**").permitAll()
 
