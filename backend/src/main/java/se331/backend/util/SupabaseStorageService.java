@@ -54,30 +54,30 @@ public class SupabaseStorageService {
 
     }
 
-//    public StorageFileDto uploadImage (MultipartFile file)
-//            throws ServletException, IOException {
-//
-//        String fileName = file.getOriginalFilename();
-//
-//        if (fileName != null && !fileName.isEmpty()
-//                && fileName.contains(".")) {
-//
-//            final String extension =
-//                    fileName.substring(fileName.lastIndexOf('.') + 1);
-//            String[] allowedExt = {"jpg", "jpeg", "png", "gif"};
-//
-//            for (String s : allowedExt) {
-//                if (extension.equals(s)) {
-//                    String urlName = this.uploadFile(file);
-//                    return StorageFileDto.builder()
-//                            .name(urlName)
-//                            .build();
-//                }
-//            }
-//
-//            throw new ServletException("file must be an image (jpg, jpeg, png, gif)");
-//        }
-//
-//        return null;
-//    }
+    public StorageFileDto uploadImage (MultipartFile file)
+            throws ServletException, IOException {
+
+        String fileName = file.getOriginalFilename();
+
+        if (fileName != null && !fileName.isEmpty()
+                && fileName.contains(".")) {
+
+            final String extension =
+                    fileName.substring(fileName.lastIndexOf('.') + 1);
+            String[] allowedExt = {"jpg", "jpeg", "png", "gif"};
+
+            for (String s : allowedExt) {
+                if (extension.equals(s)) {
+                    String urlName = this.uploadFile(file);
+                    return StorageFileDto.builder()
+                            .name(urlName)
+                            .build();
+                }
+            }
+
+            throw new ServletException("file must be an image (jpg, jpeg, png, gif)");
+        }
+
+        return null;
+    }
 }

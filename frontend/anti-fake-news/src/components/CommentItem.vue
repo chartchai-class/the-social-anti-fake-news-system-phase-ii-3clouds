@@ -6,7 +6,7 @@
           class="w-8 h-8 rounded-full mr-3 border border-gray-300 shadow-sm bg-gray-400"
         >
         </div>
-        <p class="font-bold text-gray-800">{{ comment.user || 'Anonymous' }}</p>
+        <p class="font-bold text-gray-800">{{ comment.username || 'Anonymous' }}</p>
       </div>
       <div v-if="comment.time" class="text-sm text-gray-500">
         <span>{{ formatDate(comment.time) }}</span>

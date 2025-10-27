@@ -43,12 +43,7 @@
       </div>
 
       <div class="mb-6">
-        <input
-          v-model="voterImage"
-          type="text"
-          placeholder="Enter an image URL (optional)"
-          class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
+        <ImageUpload v-model="voterImages" :max-files="1" field-name="image" />
       </div>
 
       <button
@@ -118,6 +113,7 @@ import { useNewsStore } from '../stores/news';
 import { useAuthStore } from '../stores/auth';
 import { useNotificationStore } from '../stores/notification';
 import type { News } from '../stores/news';
+import ImageUpload from './ImageUpload.vue';
 
 const props = defineProps<{
   news: News
@@ -129,11 +125,14 @@ const notificationStore = useNotificationStore();
 
 const selectedVote = ref<'fake' | 'real' | null>(null);
 const voterComment = ref<string>('');
-const voterImage = ref<string>('');
+const voterImages = ref<string[]>([]);  // ✅ Changed to array
 const isSubmitting = ref(false);
 
 // ดึง username จาก authStore
 const username = computed(() => authStore.user?.username || 'Anonymous');
+
+// ✅ Computed property to get first image or empty string
+const voterImage = computed(() => voterImages.value[0] || '');
 
 const fakeVotes = computed(() => props.news.voteSummary?.fake || 0);
 const realVotes = computed(() => props.news.voteSummary?.real || 0);
@@ -162,11 +161,11 @@ const submitVote = async () => {
   try {
     // ตรวจสอบว่าเป็นข่าวที่บันทึกแล้ว (id > 0) หรือยัง (id < 0)
     if (props.news.id > 0) {
-      // ส่งไปยัง API
+      // ส่งไปยัง API - ใช้ voterImage.value แทน
       const result = await newsStore.submitComment(props.news.id, {
         username: username.value,
         text: voterComment.value,
-        image: voterImage.value,
+        image: voterImage.value,  // ✅ This now gets first image from array
         vote: selectedVote.value
       });
 
@@ -183,7 +182,7 @@ const submitVote = async () => {
         props.news.id,
         username.value,
         voterComment.value,
-        voterImage.value || null,
+        voterImage.value || null,  // ✅ This now gets first image from array
         selectedVote.value
       );
       notificationStore.addNotification('Vote added locally!', 'success');
@@ -210,6 +209,6 @@ const scrollToComments = () => {
 const resetForm = () => {
   selectedVote.value = null;
   voterComment.value = '';
-  voterImage.value = '';
+  voterImages.value = [];  // ✅ Reset array
 };
 </script>
