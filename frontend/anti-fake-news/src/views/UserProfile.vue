@@ -11,7 +11,7 @@
             <div class="flex flex-col sm:flex-row items-center sm:items-start">
                 <!-- Profile Image -->
                 <div class="relative group">
-                    <img :src="currentUser.profileImage || 'https://placehold.co/150x150/CBD5E0/333?text=User'"
+                    <img :src="currentUser.profileImage || 'https://cdn-icons-png.flaticon.com/512/3177/3177440.png'"
                         alt="Profile Picture"
                         class="h-32 w-32 sm:h-40 sm:w-40 rounded-full object-cover ring-4 ring-white shadow-xl transition-transform duration-300 group-hover:scale-105" />
                     <div
@@ -121,7 +121,7 @@
                                 <!-- User Display -->
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
-                                        <img :src="user.profileImage || 'https://placehold.co/80x80/CBD5E0/333?text=U'"
+                                        <img :src="user.profileImage || 'https://cdn-icons-png.flaticon.com/512/3177/3177440.png'"
                                             alt="User avatar"
                                             class="h-12 w-12 rounded-full object-cover ring-2 ring-gray-200" />
                                         <div>

@@ -52,7 +52,7 @@ public class InitApp implements CommandLineRunner {
                 "Admin",
                 "User",
                 "admin",
-                "https://placehold.co/100x100/FF0000/FFF?text=ADMIN",
+                "https://i.pinimg.com/736x/c4/e3/73/c4e373c23e972416abacc11a276cdb24.jpg",
                 List.of(Role.ROLE_ADMIN) // Admin มีเพียง ROLE_ADMIN
         );
         seedUserIfMissing(
@@ -61,7 +61,7 @@ public class InitApp implements CommandLineRunner {
                 "Member",
                 "User",
                 "member",
-                "https://placehold.co/100x100/00FF00/FFF?text=MEMBER",
+                "https://pbs.twimg.com/media/GuLUfQfXsAA5IfT.jpg",
                 List.of(Role.ROLE_MEMBER, Role.ROLE_READER) // Member มี 2 Roles
         );
         seedUserIfMissing(
@@ -70,7 +70,7 @@ public class InitApp implements CommandLineRunner {
                 "Reader",
                 "User",
                 "reader",
-                "https://placehold.co/100x100/0000FF/FFF?text=READER",
+                "https://i.pinimg.com/736x/fc/67/eb/fc67ebe940d52447bb920e368dc471b8.jpg",
                 List.of(Role.ROLE_READER) // Reader มี Role เดียว
         );
         System.out.println("Default users initialization check complete.");
