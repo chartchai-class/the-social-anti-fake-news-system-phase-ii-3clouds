@@ -9,4 +9,5 @@ public interface NewsDao {
     List<News> findAll();
     Optional<News> findById(Long id);
     News save(News news);
+    void deleteById(Long id);
 }
