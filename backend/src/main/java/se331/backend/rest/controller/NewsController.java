@@ -13,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/news")
+@CrossOrigin(origins = "*")
 public class NewsController {
 
     @Autowired
@@ -45,5 +46,20 @@ public class NewsController {
 
         NewsDTO updatedNews = newsService.addCommentToNews(newsId, request);
         return ResponseEntity.ok(updatedNews);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteNews(@PathVariable Long id) {
+        newsService.deleteNews(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{newsId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteCommentFromNews(
+            @PathVariable Long newsId,
+            @PathVariable Long commentId) {
+
+        newsService.deleteCommentFromNews(newsId, commentId);
+        return ResponseEntity.noContent().build();
     }
 }

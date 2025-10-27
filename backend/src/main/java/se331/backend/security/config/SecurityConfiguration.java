@@ -51,7 +51,7 @@ public class SecurityConfiguration {
 
                             // 3. โหวต/คอมเมนต์ (POST /api/news/{id}/comments)
                             // (READER, MEMBER, ADMIN ทำได้)
-                            .requestMatchers(HttpMethod.POST, "/api/news/{id}/comments").hasAnyRole("READER", "MEMBER", "ADMIN")
+                            .requestMatchers(HttpMethod.POST, "/api/news/*/comments").hasAnyRole("READER", "MEMBER", "ADMIN")
 
                             // 4. โพสต์ข่าวใหม่ (POST /api/news)
                             // (MEMBER, ADMIN ทำได้)
@@ -59,6 +59,7 @@ public class SecurityConfiguration {
 
                             // 5. ลบข่าว/คอมเมนต์ (DELETE)
                             // (ADMIN ทำได้)
+                            .requestMatchers(HttpMethod.DELETE, "/api/news/*/comments/**").hasRole("ADMIN")
                             .requestMatchers(HttpMethod.DELETE, "/api/news/**").hasRole("ADMIN")
                             .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasRole("ADMIN") // (เราต้องสร้าง API นี้)
 

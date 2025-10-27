@@ -11,4 +11,6 @@ public interface NewsService {
     NewsDTO getNewsById(Long id);
     NewsDTO createNews(CreateNewsRequest request);
     NewsDTO addCommentToNews(Long newsId, CreateCommentRequest request);
+    void deleteNews(Long id);
+    void deleteCommentFromNews(Long newsId, Long commentId);
 }
