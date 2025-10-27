@@ -4,6 +4,7 @@ import NewsDetail from '../views/NewsDetail.vue'
 import AddNews from '../views/AddNews.vue'
 import LoginView from '@/views/LoginView.vue'
 import UserProfile from '@/views/UserProfile.vue'
+import RegisterView from '@/views/RegisterView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,7 +17,7 @@ const router = createRouter({
     {
       path: '/register',
       name: 'register',
-      component: LoginView
+      component: RegisterView
     },
     {
       path: '/',

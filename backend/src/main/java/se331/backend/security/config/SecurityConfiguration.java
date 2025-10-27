@@ -42,6 +42,9 @@ public class SecurityConfiguration {
                 .csrf((crsf) -> crsf.disable())
                 .authorizeHttpRequests((authorize) -> {
                     authorize
+                            .requestMatchers(HttpMethod.GET, "/api/v1/auth/check-username").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/api/v1/auth/check-email").permitAll()
+
                             // 1. Auth API (Login/Register) - เปิดสาธารณะ
                             .requestMatchers("/api/v1/auth/**").permitAll()
 
@@ -58,7 +61,7 @@ public class SecurityConfiguration {
                             // 4. โหวต/คอมเมนต์ (POST /api/comments)
                             // เปลี่ยนจาก /api/news/*/comments เป็น /api/comments
                             .requestMatchers(HttpMethod.POST, "/api/comments").hasAnyRole("READER", "MEMBER", "ADMIN")
-                            .requestMatchers(HttpMethod.POST, "/uploadFile").hasAnyRole("READER", "MEMBER", "ADMIN")
+                            .requestMatchers(HttpMethod.POST, "/uploadFile").permitAll()
 
                             // 5. โพสต์ข่าวใหม่ (POST /api/news)
                             .requestMatchers(HttpMethod.POST, "/api/news").hasAnyRole("MEMBER", "ADMIN")

@@ -36,10 +36,10 @@
             <router-link :to="{ name: 'user-profile' }"
               class="flex items-center space-x-2 rounded-md p-1 hover:bg-gray-100 transition-colors duration-200"
               title="View Profile">
-              <img :src="userProfileImage || 'https://placehold.co/100x100/CBD5E0/333?text=User'" alt="User Profile"
+              <img :src="userProfileImage || 'https://cdn-icons-png.flaticon.com/512/3177/3177440.png'" alt="User Profile"
                 class="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-cover" />
               <span class="text-sm sm:text-base font-medium text-gray-700 hidden md:inline">
-                Hi, {{ userFirstName }}
+                Hi, {{ userUsername }}
               </span>
             </router-link>
 
@@ -70,7 +70,7 @@ const creatorRoles: Role[] = ['ROLE_MEMBER', 'ROLE_ADMIN']
 const canCreateNews = computed(() => authStore.hasAnyRole(creatorRoles))
 
 const isLoggedIn = computed(() => authStore.isAuthenticated)
-const userFirstName = computed(() => authStore.user?.firstname || authStore.user?.username || 'User')
+const userUsername = computed(() => authStore.user?.username || 'User')
 const userProfileImage = computed(() => authStore.userProfileImage)
 
 const refreshPage = () => {
