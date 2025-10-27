@@ -49,24 +49,26 @@ public class SecurityConfiguration {
                             .requestMatchers(HttpMethod.GET, "/api/news").permitAll()
                             .requestMatchers(HttpMethod.GET, "/api/news/**").permitAll()
 
-                            // 3. โหวต/คอมเมนต์ (POST /api/news/{id}/comments)
-                            // (READER, MEMBER, ADMIN ทำได้)
-                            .requestMatchers(HttpMethod.POST, "/api/news/*/comments").hasAnyRole("READER", "MEMBER", "ADMIN")
+                            // 3. ดึงคอมเมนต์ (GET /api/comments/news/{newsId})
+                            .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
 
-                            // 4. โพสต์ข่าวใหม่ (POST /api/news)
-                            // (MEMBER, ADMIN ทำได้)
+                            // 4. โหวต/คอมเมนต์ (POST /api/comments)
+                            // เปลี่ยนจาก /api/news/*/comments เป็น /api/comments
+                            .requestMatchers(HttpMethod.POST, "/api/comments").hasAnyRole("READER", "MEMBER", "ADMIN")
+
+                            // 5. โพสต์ข่าวใหม่ (POST /api/news)
                             .requestMatchers(HttpMethod.POST, "/api/news").hasAnyRole("MEMBER", "ADMIN")
 
-                            // 5. ลบข่าว/คอมเมนต์ (DELETE)
-                            // (ADMIN ทำได้)
+                            // 6. ลบข่าว (DELETE)
                             .requestMatchers(HttpMethod.DELETE, "/api/news/**").hasRole("ADMIN")
-                            .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasRole("ADMIN") // (เราต้องสร้าง API นี้)
 
-                            // 6. จัดการ User
-                            // (ADMIN ทำได้)
+                            // 7. ลบคอมเมนต์ (DELETE)
+                            .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasRole("ADMIN")
+
+                            // 8. จัดการ User
                             .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
 
-                            // 7. Request อื่นๆ ที่เหลือ - ต้อง Login
+                            // 9. Request อื่นๆ ที่เหลือ - ต้อง Login
                             .anyRequest().authenticated();
                 })
                 .authenticationProvider(authenticationProvider)

@@ -8,4 +8,5 @@ public interface CommentService {
     Comment save(Comment comment);
     Page<Comment> getCommentsByNewsId(Long newsId, Pageable pageable);
     void deleteComment(Long id);
+    Comment getCommentById(Long id); // เพิ่มบรรทัดนี้
 }
