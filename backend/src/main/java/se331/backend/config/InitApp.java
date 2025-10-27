@@ -53,7 +53,7 @@ public class InitApp implements CommandLineRunner {
                 "User",
                 "admin",
                 "https://placehold.co/100x100/FF0000/FFF?text=ADMIN",
-                List.of(Role.ROLE_ADMIN, Role.ROLE_MEMBER, Role.ROLE_READER) // Admin มีทุก Role
+                List.of(Role.ROLE_ADMIN) // Admin มีเพียง ROLE_ADMIN
         );
         seedUserIfMissing(
                 "member",

@@ -29,4 +29,9 @@ public class NewsDaoImpl implements NewsDao {
     public News save(News news) {
         return newsRepository.save(news);
     }
+
+    @Override
+    public void deleteById(Long id) {
+        newsRepository.deleteById(id);
+    }
 }

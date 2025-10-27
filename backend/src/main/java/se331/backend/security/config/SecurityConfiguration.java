@@ -51,6 +51,9 @@ public class SecurityConfiguration {
 
                             // 3. ดึงคอมเมนต์ (GET /api/comments/news/{newsId})
                             .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
+                            // 3. โหวต/คอมเมนต์ (POST /api/news/{id}/comments)
+                            // (READER, MEMBER, ADMIN ทำได้)
+                            .requestMatchers(HttpMethod.POST, "/api/news/*/comments").hasAnyRole("READER", "MEMBER", "ADMIN")
 
                             // 4. โหวต/คอมเมนต์ (POST /api/comments)
                             // เปลี่ยนจาก /api/news/*/comments เป็น /api/comments
@@ -60,8 +63,12 @@ public class SecurityConfiguration {
                             // 5. โพสต์ข่าวใหม่ (POST /api/news)
                             .requestMatchers(HttpMethod.POST, "/api/news").hasAnyRole("MEMBER", "ADMIN")
 
-                            // 6. ลบข่าว (DELETE)
+
+                            // 6. ลบข่าว/คอมเมนต์ (DELETE)
+                            // (ADMIN ทำได้)
+                            .requestMatchers(HttpMethod.DELETE, "/api/news/*/comments/**").hasRole("ADMIN")
                             .requestMatchers(HttpMethod.DELETE, "/api/news/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasRole("ADMIN") // (เราต้องสร้าง API นี้)
 
                             // 7. ลบคอมเมนต์ (DELETE)
                             .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasRole("ADMIN")
@@ -72,7 +79,6 @@ public class SecurityConfiguration {
 
                             // 9. Request อื่นๆ ที่เหลือ - ต้อง Login
                             .anyRequest().authenticated();
-
                 })
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

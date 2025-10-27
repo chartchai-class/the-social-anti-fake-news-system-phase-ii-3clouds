@@ -93,6 +93,7 @@ public class NewsServiceImpl implements NewsService {
         comment.setImage(request.getImage());
         comment.setTime(Instant.now());
         comment.setVote(Vote.valueOf(request.getVote().toUpperCase()));
+        news.addComment(comment);
         comment.setNews(news);
 
         // 1. เพิ่มคอมเมนต์ลง List
@@ -109,5 +110,29 @@ public class NewsServiceImpl implements NewsService {
         News updatedNews = newsDao.save(news);
 
         return newsMapper.toNewsDTO(updatedNews);
+    }
+
+    @Override
+    @Transactional
+    public void deleteNews(Long id) {
+        News news = newsDao.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "News not found with id: " + id));
+        newsDao.deleteById(news.getId());
+    }
+
+    @Override
+    @Transactional
+    public void deleteCommentFromNews(Long newsId, Long commentId) {
+        News news = newsDao.findById(newsId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "News not found with id: " + newsId));
+
+        Comment targetComment = news.getComments().stream()
+                .filter(comment -> comment.getId() != null && comment.getId().equals(commentId))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Comment not found with id: " + commentId + " for news id: " + newsId));
+
+        news.removeComment(targetComment);
+        newsDao.save(news);
     }
 }
