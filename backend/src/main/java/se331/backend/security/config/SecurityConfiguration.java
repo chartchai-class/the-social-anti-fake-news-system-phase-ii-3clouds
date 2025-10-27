@@ -51,8 +51,12 @@ public class SecurityConfiguration {
                             .requestMatchers(HttpMethod.GET, "/api/news/**").permitAll()
 
                             // 3. โหวต/คอมเมนต์ (POST /api/news/{id}/comments)
-                            // (READER, MEMBER, ADMIN ทำได้)
-                            .requestMatchers(HttpMethod.POST, "/api/news/**/comments").hasAnyAuthority("ROLE_READER", "ROLE_MEMBER", "ROLE_ADMIN")
+                            // ✅ แก้จาก **/comments เป็น */comments
+                            .requestMatchers(HttpMethod.POST, "/api/news/*/comments").hasAnyAuthority("ROLE_READER", "ROLE_MEMBER", "ROLE_ADMIN")
+
+                            // ✅ เพิ่ม API สำหรับ CommentController
+                            .requestMatchers(HttpMethod.POST, "/api/comments").permitAll()  // หรือเปลี่ยนเป็น hasAnyAuthority ถ้าต้องการให้ต้อง login
+                            .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
 
                             // 4. โพสต์ข่าวใหม่ (POST /api/news)
                             // (MEMBER, ADMIN ทำได้)
@@ -61,7 +65,7 @@ public class SecurityConfiguration {
                             // 5. ลบข่าว/คอมเมนต์ (DELETE)
                             // (ADMIN ทำได้)
                             .requestMatchers(HttpMethod.DELETE, "/api/news/**").hasAuthority("ROLE_ADMIN")
-                            .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasAuthority("ROLE_ADMIN") // (เราต้องสร้าง API นี้)
+                            .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasAuthority("ROLE_ADMIN")
 
                             // 6. จัดการ User
                             // (ADMIN ทำได้)
