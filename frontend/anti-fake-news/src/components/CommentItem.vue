@@ -1,19 +1,17 @@
 <template>
-  <div class="bg-gray-50 p-4 rounded-lg mb-4 border">
+  <div v-if="comment" class="bg-gray-50 p-4 rounded-lg mb-4 border">
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center">
         <div
-          class="w-8 h-8 rounded-full flex items-center justify-center mr-3 border border-gray-300 shadow-sm"
-          :style="{ 'background-color': getProfileColor(comment.user) }"
+          class="w-8 h-8 rounded-full mr-3 border border-gray-300 shadow-sm bg-gray-400"
         >
-          <span class="text-sm font-bold text-gray-800">{{ comment.user.charAt(0).toUpperCase() }}</span>
         </div>
-        <p class="font-bold text-gray-800">{{ comment.user }}</p>
+        <p class="font-bold text-gray-800">{{ comment.user || 'Anonymous' }}</p>
       </div>
-      <div class="text-sm text-gray-500">
-        <span>{{ new Date(comment.time).toLocaleDateString() }}</span>
+      <div v-if="comment.time" class="text-sm text-gray-500">
+        <span>{{ formatDate(comment.time) }}</span>
         <span class="mx-2">|</span>
-        <span>{{ new Date(comment.time).toLocaleTimeString() }}</span>
+        <span>{{ formatTime(comment.time) }}</span>
       </div>
     </div>
     <div class="ml-11">
@@ -36,8 +34,9 @@
         v-if="comment.image"
         :src="comment.image"
         alt="Comment Image"
-        class="mt-4 w-full h-auto rounded-lg max-h-64 object-cover cursor-pointer"
+        class="mt-4 w-full h-auto rounded-lg max-h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
         @click="handleImageClick"
+        @error="handleImageError"
       />
     </div>
   </div>
@@ -53,21 +52,40 @@ const props = defineProps<{
 
 const emit = defineEmits(['show-full-image']);
 
-// ฟังก์ชันสำหรับสร้างสีพาสเทลที่สดใสจากชื่อผู้ใช้
-const getProfileColor = (username: string) => {
-  let hash = 0;
-  for (let i = 0; i < username.length; i++) {
-    hash = username.charCodeAt(i) + ((hash << 5) - hash);
+const formatDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch (error) {
+    return '';
   }
-  const hue = hash % 360;
-  const saturation = 70;
-  const lightness = 85;
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
+
+const formatTime = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('th-TH', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (error) {
+    return '';
+  }
 };
 
 const handleImageClick = () => {
   if (props.comment.image) {
     emit('show-full-image', props.comment.image);
   }
+};
+
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement;
+  img.style.display = 'none';
+  console.error('Failed to load image:', props.comment.image);
 };
 </script>

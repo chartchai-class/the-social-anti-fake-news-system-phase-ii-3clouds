@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
 import apiClient from '../services/NewsService';
 
 export interface Comment {
@@ -35,130 +34,227 @@ export interface VoteSummary {
 
 export type Vote = 'real' | 'fake';
 
-export interface CreateNewsPayload {
-  topic: string;
-  shortDetail: string;
-  fullDetail: string;
-  image: string;
-  reporter: string;
-  dateTime?: string;
+interface NewsState {
+  allNews: News[];
+  unsavedNews: News[];
+  currentNews: News | null;
+  loading: boolean;
+  error: string | null;
 }
 
-// 2. สร้าง Pinia Store ในรูปแบบ Setup Store
-export const useNewsStore = defineStore('news', () => {
-  const allNews = ref<News[]>([]);
+export const useNewsStore = defineStore('news', {
+  state: (): NewsState => ({
+    allNews: [],
+    unsavedNews: [],
+    currentNews: null,
+    loading: false,
+    error: null,
+  }),
 
-  // Getters: ใช้ computed()
-  const getNewsById = computed(() => (id: number): News | undefined => {
-    const newsItem = allNews.value.find((news) => news.id === id);
-    if (!newsItem) return undefined;
+  getters: {
+    getCombinedNews: (state): News[] => {
+      return [...state.allNews, ...state.unsavedNews];
+    },
 
-    let calculatedStatus: 'fake' | 'not fake' | 'equal';
-    if (newsItem.voteSummary.real > newsItem.voteSummary.fake) {
-      calculatedStatus = 'not fake';
-    } else if (newsItem.voteSummary.real < newsItem.voteSummary.fake) {
-      calculatedStatus = 'fake';
-    } else {
-      calculatedStatus = 'equal';
-    }
+    getNewsById: (state) => {
+      return (id: number): News | undefined => {
+        const combinedNews = [...state.allNews, ...state.unsavedNews];
+        const newsItem = combinedNews.find((news) => news.id === id);
+        if (!newsItem) return undefined;
 
-    return { ...newsItem, status: calculatedStatus };
-  });
+        const realVotes = newsItem.voteSummary?.real || 0;
+        const fakeVotes = newsItem.voteSummary?.fake || 0;
 
-  // แก้ไข Getter เพื่อให้สามารถ Filter ข่าวจากทั้งหมดได้
-  const getNewsWithStatus = computed(() => (statusFilter: 'all' | 'fake' | 'not fake' | 'equal'): News[] => {
-    const allNewsWithStatus = allNews.value.map((news) => {
-      let calculatedStatus: 'fake' | 'not fake' | 'equal';
-      if (news.voteSummary.real > news.voteSummary.fake) {
-        calculatedStatus = 'not fake';
-      } else if (news.voteSummary.real < news.voteSummary.fake) {
-        calculatedStatus = 'fake';
-      } else {
-        calculatedStatus = 'equal';
+        let calculatedStatus: 'fake' | 'not fake' | 'equal';
+        if (realVotes > fakeVotes) {
+          calculatedStatus = 'not fake';
+        } else if (realVotes < fakeVotes) {
+          calculatedStatus = 'fake';
+        } else {
+          calculatedStatus = 'equal';
+        }
+
+        return {
+          ...newsItem,
+          status: calculatedStatus,
+          comments: newsItem.comments || [],
+        };
+      };
+    },
+
+    getNewsWithStatus: (state) => {
+      return (statusFilter: 'all' | 'fake' | 'not fake' | 'equal'): News[] => {
+        const combinedNews = [...state.allNews, ...state.unsavedNews];
+        const allNewsWithStatus = combinedNews.map((news) => {
+          const realVotes = news.voteSummary?.real || 0;
+          const fakeVotes = news.voteSummary?.fake || 0;
+
+          let calculatedStatus: 'fake' | 'not fake' | 'equal';
+          if (realVotes > fakeVotes) {
+            calculatedStatus = 'not fake';
+          } else if (realVotes < fakeVotes) {
+            calculatedStatus = 'fake';
+          } else {
+            calculatedStatus = 'equal';
+          }
+          return { ...news, status: calculatedStatus };
+        });
+
+        if (statusFilter === 'all') {
+          return allNewsWithStatus;
+        }
+        return allNewsWithStatus.filter((news) => news.status === statusFilter);
+      };
+    },
+  },
+
+  actions: {
+    async fetchNews() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.getNews();
+        this.allNews = response.data;
+      } catch (error) {
+        console.error('Error fetching news:', error);
+        this.error = 'Failed to fetch news';
+        this.allNews = [];
+      } finally {
+        this.loading = false;
       }
-      return { ...news, status: calculatedStatus };
-    });
+    },
 
-    if (statusFilter === 'all') {
-      return allNewsWithStatus;
-    }
-    return allNewsWithStatus.filter((news) => news.status === statusFilter);
-  });
+    async fetchNewsById(id: number) {
+      this.loading = true;
+      this.error = null;
+      this.currentNews = null;
 
-  // Actions: สร้างฟังก์ชันปกติ
-  async function fetchNews() {
-    try {
-      const response = await apiClient.getNews();
-      allNews.value = response.data;
-    } catch (error) {
-      console.error('Error fetching news:', error);
-      allNews.value = [];
-    }
-  }
+      try {
+        // ดึงข้อมูลข่าว
+        const newsResponse = await apiClient.getNewsById(id);
 
-  const createNews = async (newNews: CreateNewsPayload) => {
-    try {
-      const response = await apiClient.createNews(newNews);
-      const createdNews: News = response.data;
-      allNews.value = [createdNews, ...allNews.value];
-      return createdNews;
-    } catch (error) {
-      console.error('Error creating news:', error);
-      throw error;
-    }
-  };
+        // ดึง comments แยกต่างหาก
+        const commentsResponse = await apiClient.getCommentsByNewsId(id);
 
-  function addCommentToNews(
-    newsId: number,
-    user: string,
-    text: string,
-    image: string | null,
-    vote: 'real' | 'fake',
-  ) {
-    const newsIndex = allNews.value.findIndex((news) => news.id === newsId);
-    if (newsIndex === -1) {
-      console.error('News item not found!');
-      return;
-    }
+        // ตรวจสอบว่ามีข้อมูล comments หรือไม่
+        const commentsData =
+          commentsResponse.data?.content || commentsResponse.data || [];
 
-    const newsItem = allNews.value[newsIndex];
+        // แปลง username จาก Backend เป็น user สำหรับ Frontend
+        const comments = Array.isArray(commentsData)
+          ? commentsData.map((comment: any) => ({
+              id: comment.id || 0,
+              user: comment.username || comment.user || 'Anonymous',
+              text: comment.text || '',
+              image: comment.image || null,
+              time: comment.time || new Date().toISOString(),
+              vote:
+                comment.vote === 'real' || comment.vote === 'fake'
+                  ? comment.vote
+                  : 'fake',
+            }))
+          : [];
 
-    const newCommentId =
-      newsItem.comments.length > 0 ? Math.max(...newsItem.comments.map((c) => c.id)) + 1 : 1;
+        // รวมข้อมูล
+        this.currentNews = {
+          ...newsResponse.data,
+          comments,
+        };
 
-    const newComment: Comment = {
-      id: newCommentId,
-      user,
-      text,
-      image,
-      time: new Date().toISOString(),
-      vote,
-    };
+        // อัปเดตใน allNews ด้วยถ้ามีอยู่แล้ว
+        const index = this.allNews.findIndex((n) => n.id === id);
+        if (index !== -1) {
+          this.allNews[index] = this.currentNews;
+        }
 
-    newsItem.comments = [...newsItem.comments, newComment];
+        return this.currentNews;
+      } catch (err) {
+        console.error('Error fetching news by ID:', err);
+        this.error = 'Failed to fetch news details';
+        this.currentNews = null;
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
 
-    if (vote === 'real') {
-      newsItem.voteSummary.real++;
-    } else {
-      newsItem.voteSummary.fake++;
-    }
+    async submitComment(
+      newsId: number,
+      data: {
+        username: string;
+        text: string;
+        image: string;
+        vote: 'fake' | 'real';
+      }
+    ) {
+      try {
+        await apiClient.createComment({
+          username: data.username,
+          text: data.text,
+          image: data.image || null,
+          vote: data.vote,
+          newsId: newsId,
+        });
 
-    newsItem.totalVotes = newsItem.voteSummary.real + newsItem.voteSummary.fake;
+        // โหลดข้อมูลใหม่หลังส่งสำเร็จ
+        await this.fetchNewsById(newsId);
 
-    allNews.value = [
-      ...allNews.value.slice(0, newsIndex),
-      newsItem,
-      ...allNews.value.slice(newsIndex + 1),
-    ];
-  }
+        return { success: true };
+      } catch (err) {
+        console.error('Error submitting comment:', err);
+        return { success: false, error: 'Failed to submit vote' };
+      }
+    },
 
-  // 3. return ทุกอย่างที่ต้องการให้ Component เรียกใช้ได้
-  return {
-    allNews,
-    getNewsById,
-    getNewsWithStatus,
-    fetchNews,
-    createNews,
-    addCommentToNews,
-  };
+    addUnsavedNews(newNews: Omit<News, 'id'>) {
+      const tempId = Math.random() * -1000000 - Date.now();
+      this.unsavedNews.push({ ...newNews, id: tempId });
+    },
+
+    addCommentToNews(
+      newsId: number,
+      user: string,
+      text: string,
+      image: string | null,
+      vote: 'real' | 'fake'
+    ) {
+      const newsItem = this.getNewsById(newsId);
+      if (!newsItem) {
+        console.error('News item not found!');
+        return;
+      }
+
+      // ตรวจสอบให้แน่ใจว่า comments array มีอยู่
+      if (!newsItem.comments) {
+        newsItem.comments = [];
+      }
+
+      const newCommentId =
+        newsItem.comments.length > 0
+          ? Math.max(...newsItem.comments.map((c) => c.id)) + 1
+          : 1;
+
+      const newComment: Comment = {
+        id: newCommentId,
+        user: user || 'Anonymous',
+        text: text || '',
+        image: image || null,
+        time: new Date().toISOString(),
+        vote: vote,
+      };
+
+      newsItem.comments.push(newComment);
+
+      // อัปเดต vote summary
+      if (!newsItem.voteSummary) {
+        newsItem.voteSummary = { real: 0, fake: 0 };
+      }
+
+      if (vote === 'real') {
+        newsItem.voteSummary.real++;
+      } else {
+        newsItem.voteSummary.fake++;
+      }
+    },
+  },
 });

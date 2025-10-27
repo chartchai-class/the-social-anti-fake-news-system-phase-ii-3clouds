@@ -87,4 +87,40 @@ export default {
   }) {
     return apiClient.post('/api/news', payload);
   },
+  /**
+   * ดึง comments ของข่าวตาม newsId (รองรับ pagination)
+   */
+  getCommentsByNewsId(newsId: number, page: number = 0, size: number = 100) {
+    return apiClient.get(`/api/comments/news/${newsId}`, {
+      params: { page, size }
+    });
+  },
+
+  /**
+   * สร้าง comment/vote ใหม่
+   */
+  createComment(data: {
+    username: string;
+    text: string;
+    image: string | null;
+    vote: 'fake' | 'real';
+    newsId: number;
+  }) {
+    return apiClient.post('/api/comments', data);
+  },
+
+  /**
+   * ดึงสรุปคะแนนโหวตของข่าว
+   */
+  getVoteSummary(newsId: number) {
+    return apiClient.get(`/api/comments/news/${newsId}/summary`);
+  },
+
+  /**
+   * ลบ comment ตาม ID
+   */
+  deleteComment(id: number) {
+    return apiClient.delete(`/api/comments/${id}`);
+  }
+
 };
