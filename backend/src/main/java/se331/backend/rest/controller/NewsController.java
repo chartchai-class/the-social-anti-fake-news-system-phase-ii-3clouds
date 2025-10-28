@@ -74,20 +74,19 @@ public class NewsController {
 
     @GetMapping("/search")
     public ResponseEntity<?> searchNews(
-            @RequestParam(required = false) String keyword,
+            @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "_limit", required = false) Integer perPage,
             @RequestParam(value = "_page", required = false) Integer page) {
 
         perPage = perPage == null ? 10 : perPage;
         page = page == null ? 1 : page;
 
-        // เรียก searchNews จาก Service
-        Page<NewsDTO> pageOutput = newsService.searchNews(keyword, PageRequest.of(page - 1, perPage));
+        // เรียก getNews แทน searchNews
+        Page<NewsDTO> pageOutput = newsService.getNews(title, PageRequest.of(page - 1, perPage));
 
         HttpHeaders responseHeader = new HttpHeaders();
         responseHeader.set("x-total-count", String.valueOf(pageOutput.getTotalElements()));
 
         return new ResponseEntity<>(pageOutput.getContent(), responseHeader, HttpStatus.OK);
     }
-
 }

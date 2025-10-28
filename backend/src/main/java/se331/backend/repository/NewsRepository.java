@@ -9,14 +9,14 @@ import se331.backend.entity.News;
 @Repository
 public interface NewsRepository extends JpaRepository<News, Long> {
 
+    // สำหรับ normal users - แยกเป็น method เดี่ยวๆ
+    Page<News> findByRemovedFalseAndTopicContainingIgnoreCase(String topic, Pageable pageable);
+    Page<News> findByRemovedFalseAndShortDetailContainingIgnoreCase(String shortDetail, Pageable pageable);
+    Page<News> findByRemovedFalseAndReporterContainingIgnoreCase(String reporter, Pageable pageable);
     Page<News> findByRemovedFalse(Pageable pageable);
 
-    // สำหรับ normal users (กรอง removed)
-    Page<News> findByRemovedFalseAndTopicContainingIgnoreCaseAndShortDetailContainingIgnoreCaseAndReporterContainingIgnoreCase(
-            String topic, String shortDetail, String reporter, Pageable pageable);
-
-    // สำหรับ admin (แสดงทุกข่าว ไม่กรอง removed)
-    Page<News> findByTopicContainingIgnoreCaseOrShortDetailContainingIgnoreCaseOrReporterContainingIgnoreCase(
-            String topic, String shortDetail, String reporter, Pageable pageable);
-
+    // สำหรับ admin - แยกเป็น method เดี่ยวๆ
+    Page<News> findByTopicContainingIgnoreCase(String topic, Pageable pageable);
+    Page<News> findByShortDetailContainingIgnoreCase(String shortDetail, Pageable pageable);
+    Page<News> findByReporterContainingIgnoreCase(String reporter, Pageable pageable);
 }

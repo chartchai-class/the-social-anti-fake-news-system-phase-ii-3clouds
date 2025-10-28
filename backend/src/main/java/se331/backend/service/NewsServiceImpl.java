@@ -158,19 +158,19 @@ public class NewsServiceImpl implements NewsService {
     }
 
     @Override
-    public Page<NewsDTO> searchNews(String title, Pageable pageable) {
+    public Page<NewsDTO> getNews(String title, Pageable pageable) {
         Page<News> newsPage;
         boolean isAdmin = isCurrentUserAdmin();
 
         if (title != null && !title.isBlank()) {
-            // มี keyword
+            // มี keyword - ค้นหา
             if (isAdmin) {
                 newsPage = newsDao.searchByKeywordIncludingRemoved(title, pageable);
             } else {
                 newsPage = newsDao.searchByKeyword(title, pageable);
             }
         } else {
-            // ไม่มี keyword
+            // ไม่มี keyword - แสดงทั้งหมด
             if (isAdmin) {
                 newsPage = newsDao.findAll(pageable);
             } else {
@@ -178,7 +178,6 @@ public class NewsServiceImpl implements NewsService {
             }
         }
 
-        // แค่ map เป็น DTO
         return newsPage.map(newsMapper::toNewsDTO);
     }
 

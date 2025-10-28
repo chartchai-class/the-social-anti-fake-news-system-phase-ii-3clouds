@@ -17,6 +17,5 @@ public interface NewsService {
     void deleteNews(Long id);
     void deleteCommentFromNews(Long newsId, Long commentId);
 
-    // เพิ่ม search method with pagination
-    Page<NewsDTO> searchNews(String title, Pageable pageable);
+    Page<NewsDTO> getNews(String title, Pageable pageable);
 }
