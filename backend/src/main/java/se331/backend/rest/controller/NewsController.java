@@ -27,6 +27,12 @@ public class NewsController {
         return ResponseEntity.ok(newsList);
     }
 
+    @GetMapping("/removed")
+    public ResponseEntity<List<NewsDTO>> getRemovedNews() {
+        List<NewsDTO> removedNews = newsService.getRemovedNews();
+        return ResponseEntity.ok(removedNews);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<NewsDTO> getNewsById(@PathVariable Long id) {
         NewsDTO news = newsService.getNewsById(id);

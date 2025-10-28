@@ -73,6 +73,10 @@ export default {
     return apiClient.get('/api/news');
   },
 
+  getRemovedNews() {
+    return apiClient.get('/api/news/removed');
+  },
+
   getNewsById(id: number) {
     return apiClient.get(`/api/news/${id}`);
   },

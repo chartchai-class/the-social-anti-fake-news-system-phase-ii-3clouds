@@ -41,6 +41,7 @@ public class NewsMapper {
                         ? news.getDateTime().toString()
                         : null
         );
+        dto.setRemoved(news.isRemoved());
 
         List<Comment> comments = news.getComments();
         List<CommentDTO> commentDTOs = (comments == null ? List.<CommentDTO>of() : comments.stream()
