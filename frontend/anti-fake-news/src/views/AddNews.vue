@@ -97,33 +97,52 @@
             ></textarea>
           </div>
 
-          <!-- Image URL -->
+          <!-- News Image Upload -->
           <div class="group">
-            <label for="image" class="block text-lg font-semibold text-gray-900 mb-3">
-              Image URL
-            </label>
-            <input 
-              v-model="formData.image" 
-              type="url" 
-              id="image" 
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-800 text-lg" 
-              placeholder="https://example.com/image.jpg" 
-              required
-            >
-          </div>
-
-          <!-- Image Preview (if URL is provided) -->
-          <div v-if="formData.image && isValidImageUrl" class="group">
             <label class="block text-lg font-semibold text-gray-900 mb-3">
-              Image Preview
+              News Image
             </label>
-            <img
-              :src="formData.image"
-              alt="News image preview"
-              class="w-full h-auto rounded-lg shadow-md"
-              @load="handleImageLoad"
-              @error="handleImageError"
-            >
+            <div class="flex flex-col items-center gap-4">
+              <div
+                class="relative w-full max-w-md cursor-pointer"
+                @click="triggerFileInput"
+              >
+                <div
+                  class="h-64 w-full rounded-lg border-2 border-dashed border-gray-300 transition-all duration-200 hover:border-blue-500 overflow-hidden bg-gray-50"
+                >
+                  <img
+                    v-if="imagePreview || formData.image"
+                    :src="imagePreview || formData.image"
+                    alt="News image preview"
+                    class="h-full w-full object-cover"
+                  />
+                  <div
+                    v-else
+                    class="flex h-full flex-col items-center justify-center space-y-2 text-gray-500"
+                  >
+                    <span class="text-base font-medium">Click to upload</span>
+                    <span class="text-xs">JPG, JPEG, PNG, GIF</span>
+                  </div>
+                </div>
+                <div
+                  v-if="imagePreview || formData.image"
+                  class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 text-white text-sm font-medium opacity-0 transition-opacity duration-200 hover:opacity-100"
+                >
+                  Change image
+                </div>
+              </div>
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                class="hidden"
+                @change="handleNewsImageUpload"
+              />
+              <div class="text-sm text-gray-500 text-center space-y-1">
+                <p v-if="isImageUploading" class="text-blue-600 font-medium">Uploading image...</p>
+                <p v-else-if="formData.image" class="text-green-600 font-medium">Image uploaded successfully</p>
+              </div>
+            </div>
           </div>
 
           <!-- Submit Button Section -->
@@ -136,8 +155,10 @@
                 Cancel
               </router-link>
               <button 
-                type="submit" 
-                class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg hover:shadow-xl"
+                type="submit"
+                :disabled="isSubmitting || !canSubmit || !formData.image || isImageUploading"
+                class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
+                :class="{ 'pointer-events-none': isSubmitting || !canSubmit || !formData.image || isImageUploading }"
               >
                 <span class="flex items-center space-x-2">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,6 +168,15 @@
                 </span>
               </button>
             </div>
+            <p v-if="!canSubmit" class="mt-2 text-sm text-red-600">
+              Only members or admins can publish news. Please sign in with the appropriate role.
+            </p>
+            <p v-else-if="!formData.image" class="mt-2 text-sm text-red-600">
+              Please upload a news image before submitting.
+            </p>
+            <p v-else-if="isImageUploading" class="mt-2 text-sm text-blue-600">
+              Waiting for the image upload to finish...
+            </p>
           </div>
 
         </form>
@@ -163,16 +193,20 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue';
+import { reactive, computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNewsStore } from '../stores/news';
 import { useNotificationStore } from '../stores/notification';
 import ToastNotification from '../components/ToastNotification.vue';
-import type { News } from '../stores/news';
+import type { CreateNewsPayload } from '../stores/news';
+import { useAuthStore } from '../stores/auth';
+import axios from 'axios';
+import apiClient from '@/services/AxiosClient';
 
 const router = useRouter();
 const newsStore = useNewsStore();
 const notificationStore = useNotificationStore();
+const authStore = useAuthStore();
 
 const formData = reactive({
   topic: '',
@@ -182,35 +216,77 @@ const formData = reactive({
   reporter: '',
 });
 
-const isValidImageUrl = computed(() => {
-  if (!formData.image) return false;
-  try {
-    const url = new URL(formData.image);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
+const fileInput = ref<HTMLInputElement | null>(null);
+const imagePreview = ref<string | null>(null);
+const isImageUploading = ref(false);
+
+const isSubmitting = ref(false);
+const canSubmit = computed(() => authStore.roles.includes('ROLE_MEMBER') || authStore.roles.includes('ROLE_ADMIN'));
+
+function triggerFileInput() {
+  fileInput.value?.click();
+}
+
+async function handleNewsImageUpload(event: Event) {
+  const target = event.target as HTMLInputElement | null;
+  const file = target?.files?.[0];
+  if (!file) {
+    return;
   }
-});
 
-const handleImageLoad = () => {
-  // Image loaded successfully
-};
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imagePreview.value = (e.target?.result as string) ?? null;
+  };
+  reader.readAsDataURL(file);
 
-const handleImageError = () => {
-  console.warn('Failed to load preview image');
-};
+  const uploadForm = new FormData();
+  uploadForm.append('file', file);
 
-const handleAddNews = () => {
+  isImageUploading.value = true;
+
   try {
-    const newNews: Omit<News, 'id'> = {
+    const response = await apiClient.post('/uploadFile', uploadForm, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    formData.image = response.data;
+  } catch (error) {
+    console.error('Image upload failed:', error);
+    notificationStore.addNotification('Image upload failed. Please try again.', 'error');
+    formData.image = '';
+    imagePreview.value = null;
+  } finally {
+    if (target) {
+      target.value = '';
+    }
+    isImageUploading.value = false;
+  }
+}
+
+const handleAddNews = async () => {
+  if (isSubmitting.value || isImageUploading.value) {
+    return;
+  }
+
+  if (!authStore.isAuthenticated || !canSubmit.value) {
+    notificationStore.addNotification('You need a member or admin account to add news.', 'error');
+    return;
+  }
+
+  if (!formData.image) {
+    notificationStore.addNotification('Please upload a news image before submitting.', 'error');
+    return;
+  }
+
+  isSubmitting.value = true;
+
+  try {
+    const newNews: CreateNewsPayload = {
       ...formData,
       dateTime: new Date().toISOString(),
-      voteSummary: { real: 0, fake: 0 },
-      comments: [],
-      totalVotes: 0,
     };
-    
-    newsStore.addUnsavedNews(newNews);
+
+    await newsStore.createNews(newNews);
     
     // Show success notification
     notificationStore.addNotification('News added successfully.', 'success');
@@ -219,6 +295,10 @@ const handleAddNews = () => {
     Object.keys(formData).forEach(key => {
       formData[key as keyof typeof formData] = '';
     });
+    imagePreview.value = null;
+    if (fileInput.value) {
+      fileInput.value.value = '';
+    }
     
     // Navigate to home after a short delay
     setTimeout(() => {
@@ -227,7 +307,19 @@ const handleAddNews = () => {
     
   } catch (error) {
     console.error('Error adding news:', error);
-    notificationStore.addNotification('Failed to add news. Please try again.', 'error');
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 403) {
+        notificationStore.addNotification('You are not authorized to add news.', 'error');
+      } else if (error.response?.status === 401) {
+        notificationStore.addNotification('Session expired. Please log in again.', 'error');
+      } else {
+        notificationStore.addNotification('Failed to add news. Please try again.', 'error');
+      }
+    } else {
+      notificationStore.addNotification('Failed to add news. Please try again.', 'error');
+    }
+  } finally {
+    isSubmitting.value = false;
   }
 };
 </script>
