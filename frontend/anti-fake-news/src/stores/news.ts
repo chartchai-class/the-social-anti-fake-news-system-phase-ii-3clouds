@@ -42,6 +42,25 @@ interface NewsState {
   error: string | null;
 }
 
+type CommentResponse = {
+  id?: number;
+  username?: string;
+  user?: string;
+  text?: string;
+  image?: string | null;
+  time?: string;
+  vote?: string;
+};
+
+export interface CreateNewsPayload {
+  topic: string;
+  shortDetail: string;
+  fullDetail: string;
+  image: string;
+  reporter: string;
+  dateTime?: string;
+}
+
 export const useNewsStore = defineStore('news', {
   state: (): NewsState => ({
     allNews: [],
@@ -124,6 +143,42 @@ export const useNewsStore = defineStore('news', {
       }
     },
 
+    async createNews(payload: CreateNewsPayload) {
+      this.error = null;
+      try {
+        const response = await apiClient.createNews(payload);
+        const createdNews = response?.data;
+
+        if (createdNews) {
+          const existingIndex = this.allNews.findIndex(
+            (newsItem) => newsItem.id === createdNews.id
+          );
+
+          if (existingIndex !== -1) {
+            this.allNews[existingIndex] = {
+              ...this.allNews[existingIndex],
+              ...createdNews,
+            };
+          } else {
+            this.allNews.unshift({
+              comments: [],
+              totalVotes: 0,
+              voteSummary: { real: 0, fake: 0 },
+              ...createdNews,
+            });
+          }
+        } else {
+          await this.fetchNews();
+        }
+
+        return createdNews;
+      } catch (error) {
+        console.error('Error creating news:', error);
+        this.error = 'Failed to create news';
+        throw error;
+      }
+    },
+
     async fetchNewsById(id: number) {
       this.loading = true;
       this.error = null;
@@ -140,14 +195,14 @@ export const useNewsStore = defineStore('news', {
         const commentsData =
           commentsResponse.data?.content || commentsResponse.data || [];
 
-        // แปลง username จาก Backend เป็น user สำหรับ Frontend
+        // แปลงข้อมูล comment และกำหนดค่าเริ่มต้นหากข้อมูลบางส่วนหายไป
         const comments = Array.isArray(commentsData)
-          ? commentsData.map((comment: any) => ({
-              id: comment.id || 0,
-              user: comment.username || comment.user || 'Anonymous',
-              text: comment.text || '',
-              image: comment.image || null,
-              time: comment.time || new Date().toISOString(),
+          ? commentsData.map((comment: CommentResponse) => ({
+              id: comment.id ?? 0,
+              username: comment.username ?? comment.user ?? 'Anonymous',
+              text: comment.text ?? '',
+              image: comment.image ?? null,
+              time: comment.time ?? new Date().toISOString(),
               vote:
                 comment.vote === 'real' || comment.vote === 'fake'
                   ? comment.vote
@@ -163,7 +218,7 @@ export const useNewsStore = defineStore('news', {
 
         // อัปเดตใน allNews ด้วยถ้ามีอยู่แล้ว
         const index = this.allNews.findIndex((n) => n.id === id);
-        if (index !== -1) {
+        if (index !== -1 && this.currentNews) {
           this.allNews[index] = this.currentNews;
         }
 
@@ -236,7 +291,7 @@ export const useNewsStore = defineStore('news', {
 
       const newComment: Comment = {
         id: newCommentId,
-        user: user || 'Anonymous',
+        username: user || 'Anonymous',
         text: text || '',
         image: image || null,
         time: new Date().toISOString(),
