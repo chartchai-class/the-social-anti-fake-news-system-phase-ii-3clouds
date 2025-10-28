@@ -2,11 +2,15 @@
   <div v-if="comment" class="bg-gray-50 p-4 rounded-lg mb-4 border">
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center">
-        <div
-          class="w-8 h-8 rounded-full mr-3 border border-gray-300 shadow-sm bg-gray-400"
-        >
-        </div>
-        <p class="font-bold text-gray-800">{{ comment.username || 'Anonymous' }}</p>
+        <img
+          :src="getProfileImage(comment.username)"
+          :alt="`${comment.username}'s profile`"
+          class="w-8 h-8 rounded-full mr-3 border border-gray-300 shadow-sm object-cover"
+          @error="handleProfileImageError"
+        />
+        <p class="font-bold text-gray-800">
+          {{ comment.username || 'Anonymous' }}
+        </p>
       </div>
       <div v-if="comment.time" class="text-sm text-gray-500">
         <span>{{ formatDate(comment.time) }}</span>
@@ -44,6 +48,7 @@
 
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue';
+import { useAuthStore } from '../stores/auth';
 import type { Comment } from '../stores/news';
 
 const props = defineProps<{
@@ -51,6 +56,26 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['show-full-image']);
+const authStore = useAuthStore();
+
+const defaultProfileImage = 'https://cdn-icons-png.flaticon.com/512/3177/3177440.png';
+
+// ฟังก์ชันดึงรูปโปรไฟล์ตาม username
+const getProfileImage = (username: string): string => {
+  // ถ้าเป็น user ปัจจุบันที่ login อยู่
+  if (authStore.user?.username === username && authStore.userProfileImage) {
+    return authStore.userProfileImage;
+  }
+  
+  // TODO: ในอนาคตอาจจะดึงจาก API หรือ store ที่เก็บ profile ของ user อื่นๆ
+  
+  return defaultProfileImage;
+};
+
+const handleProfileImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement;
+  img.src = defaultProfileImage;
+};
 
 const formatDate = (dateString: string): string => {
   try {

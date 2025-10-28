@@ -8,6 +8,7 @@ export interface Comment {
   image: string | null;
   time: string;
   vote: 'real' | 'fake';
+  profileImage?: string;
 }
 
 export interface News {
