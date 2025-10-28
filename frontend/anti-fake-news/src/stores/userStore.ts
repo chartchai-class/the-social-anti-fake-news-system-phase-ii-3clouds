@@ -56,11 +56,35 @@ export const useUserStore = defineStore('userManagement', () => {
     }, 3000)
   }
 
+  /**
+   * (Admin) ส่งคำขอ Demote User และอัปเดต State
+   * @param userId - ID ของ User ที่จะ Demote
+   */
+  async function demoteUser(userId: number) {
+    const messageStore = useMessageStore();
+    try {
+      const response = await userService.demoteUserToReader(userId);
+      const updatedUser = response.data;
+
+      // อัปเดตข้อมูลใน State
+      const index = users.value.findIndex((u) => u.id === userId);
+      if (index !== -1) {
+        users.value.splice(index, 1, updatedUser);
+        messageStore.updateMessage(`User ${updatedUser.username} demoted to READER.`);
+      }
+    } catch (error) {
+      console.error('Failed to demote user:', error);
+      messageStore.updateMessage('Failed to demote user.');
+      throw error;
+    }
+  }
+
   // --- Return ---
   return {
     users,
     isLoading,
     fetchAllUsers,
     promoteUser,
+    demoteUser
   }
 })
