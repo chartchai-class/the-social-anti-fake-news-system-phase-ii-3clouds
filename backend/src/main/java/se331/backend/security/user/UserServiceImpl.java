@@ -16,6 +16,7 @@ public class UserServiceImpl implements UserService {
 
     final UserDao userDao;
     final NewsMapper newsMapper;
+    private User savedUser;
 
     @Override
     @Transactional
@@ -55,5 +56,25 @@ public class UserServiceImpl implements UserService {
         }
         User savedUser = userDao.save(user);
         return newsMapper.toUserAuthDTO(savedUser);
+    }
+
+    @Override
+    @Transactional
+    public UserAuthDTO demoteUserToReader(Integer userId) {
+        User user = findById(userId); // (ใช้ findById ที่มีอยู่)
+
+        // ตรวจสอบว่าเป็น MEMBER (และไม่ใช่ ADMIN) หรือไม่
+        if (user.getRoles().contains(Role.ROLE_MEMBER) && !user.getRoles().contains(Role.ROLE_ADMIN)) {
+            user.getRoles().remove(Role.ROLE_MEMBER); // ลบ MEMBER ออก
+            if (!user.getRoles().contains(Role.ROLE_READER)) { // เพิ่ม READER ถ้ายังไม่มี (เผื่อกรณี Role อื่นๆ)
+                user.getRoles().add(Role.ROLE_READER);
+            }
+        } else if (user.getRoles().contains(Role.ROLE_ADMIN)) {
+            // ป้องกันการลดขั้น Admin 
+            throw new IllegalArgumentException("Cannot demote an ADMIN user.");
+        }
+        User savedUser = userDao.save(user);
+        return newsMapper.toUserAuthDTO(savedUser);
+
     }
 }

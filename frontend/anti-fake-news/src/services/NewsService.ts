@@ -1,18 +1,8 @@
-
 // src/service/NewsService.ts
 
-import axios from 'axios';
+import apiClient from './AxiosClient';
 import type { InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../stores/auth';
-
-
-const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL,
-  headers: {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-  },
-});
 
 const normalizeToken = (value: string | null) => {
   if (!value) return null;
@@ -73,6 +63,10 @@ export default {
     return apiClient.get('/api/news');
   },
 
+  getRemovedNews() {
+    return apiClient.get('/api/news/removed');
+  },
+
   getNewsById(id: number) {
     return apiClient.get(`/api/news/${id}`);
   },
@@ -121,6 +115,13 @@ export default {
    */
   deleteComment(id: number) {
     return apiClient.delete(`/api/comments/${id}`);
+  },
+
+  /**
+   * Soft Delete ข่าว
+   */
+  removeNews(id: number) {
+    return apiClient.delete(`/api/news/${id}`);
   }
 
 };

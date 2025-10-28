@@ -14,6 +14,7 @@ public class NewsDTO {
     private int totalVotes;
     private List<CommentDTO> comments;
     private String status;
+    private boolean removed;
 
     // Getters and Setters...
     public Long getId() { return id; }
@@ -38,4 +39,6 @@ public class NewsDTO {
     public void setComments(List<CommentDTO> comments) { this.comments = comments; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public boolean isRemoved() { return removed; }
+    public void setRemoved(boolean removed) { this.removed = removed; }
 }

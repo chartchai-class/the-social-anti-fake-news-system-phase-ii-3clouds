@@ -3,6 +3,10 @@ package se331.backend.service;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,8 +33,14 @@ public class NewsServiceImpl implements NewsService {
         // 1. ดึงข้อมูลจาก DAO
         List<News> allNews = newsDao.findAll();
 
+        boolean isAdmin = isCurrentUserAdmin();
+
+        List<News> visibleNews = allNews.stream()
+                .filter(news -> !news.isRemoved() || isAdmin)
+                .collect(Collectors.toList());
+
         // 2. แปลง (Logic เหมือนเดิม)
-        List<NewsDTO> allNewsDTOs = allNews.stream()
+        List<NewsDTO> allNewsDTOs = visibleNews.stream()
                 .map(newsMapper::toNewsDTO)
                 .collect(Collectors.toList());
 
@@ -39,7 +49,18 @@ public class NewsServiceImpl implements NewsService {
             return allNewsDTOs;
         }
         return allNewsDTOs.stream()
-                .filter(news -> news.getStatus().equalsIgnoreCase(statusFilter))
+                .filter(news -> news.getStatus() != null && news.getStatus().equalsIgnoreCase(statusFilter))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<NewsDTO> getRemovedNews() {
+        if (!isCurrentUserAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admin can view removed news");
+        }
+        return newsDao.findAll().stream()
+                .filter(News::isRemoved)
+                .map(newsMapper::toNewsDTO)
                 .collect(Collectors.toList());
     }
 
@@ -47,6 +68,10 @@ public class NewsServiceImpl implements NewsService {
     public NewsDTO getNewsById(Long id) {
         News news = newsDao.findById(id) // เรียกผ่าน DAO
                 .orElseThrow(() -> new EntityNotFoundException("News not found with id: " + id));
+
+        if (news.isRemoved() && !isCurrentUserAdmin()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "News not found with id: " + id);
+        }
 
         return newsMapper.toNewsDTO(news);
     }
@@ -76,6 +101,7 @@ public class NewsServiceImpl implements NewsService {
             }
         }
         news.setDateTime(createdAt);
+        news.setRemoved(false);
 
         News savedNews = newsDao.save(news); // เรียกผ่าน DAO
         return newsMapper.toNewsDTO(savedNews);
@@ -117,7 +143,8 @@ public class NewsServiceImpl implements NewsService {
     public void deleteNews(Long id) {
         News news = newsDao.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "News not found with id: " + id));
-        newsDao.deleteById(news.getId());
+        news.setRemoved(true);
+        newsDao.save(news);
     }
 
     @Override
@@ -134,5 +161,18 @@ public class NewsServiceImpl implements NewsService {
 
         news.removeComment(targetComment);
         newsDao.save(news);
+    }
+
+    private boolean isCurrentUserAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return false;
+        }
+
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
     }
 }

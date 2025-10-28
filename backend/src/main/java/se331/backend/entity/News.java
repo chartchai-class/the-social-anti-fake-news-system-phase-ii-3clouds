@@ -27,6 +27,10 @@ public class News {
     private String reporter;
     private Instant dateTime;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean removed = false;
+
     @OneToMany(mappedBy = "news", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Comment> comments = new ArrayList<>();

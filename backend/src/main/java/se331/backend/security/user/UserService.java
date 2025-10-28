@@ -18,4 +18,7 @@ public interface UserService {
 
     @Transactional
     UserAuthDTO promoteUserToMember(Integer userId);
+
+    @Transactional
+    UserAuthDTO demoteUserToReader(Integer userId);
 }

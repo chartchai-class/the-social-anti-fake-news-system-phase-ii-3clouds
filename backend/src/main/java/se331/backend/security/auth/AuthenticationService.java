@@ -73,8 +73,12 @@ public class AuthenticationService {
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         // หา user
-        User user = repository.findByUsername(request.getIdentifier())
-                .or(() -> repository.findByEmail(request.getIdentifier()))
+        String loginKey = request.getIdentifier();
+        if (loginKey == null || loginKey.isBlank()) {
+            throw new RuntimeException("Username or email is required");
+        }
+        User user = repository.findByUsername(loginKey)
+                .or(() -> repository.findByEmail(loginKey))
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // ตรวจสอบ password ด้วย AuthenticationManager
