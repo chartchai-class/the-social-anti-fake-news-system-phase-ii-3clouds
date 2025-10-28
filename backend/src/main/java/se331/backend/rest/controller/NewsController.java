@@ -8,6 +8,9 @@ import se331.backend.entity.CreateCommentRequest;
 import se331.backend.entity.CreateNewsRequest;
 import se331.backend.entity.NewsDTO;
 import se331.backend.service.NewsService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
 
 import java.util.List;
 
@@ -68,4 +71,23 @@ public class NewsController {
         newsService.deleteCommentFromNews(newsId, commentId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchNews(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(value = "_limit", required = false) Integer perPage,
+            @RequestParam(value = "_page", required = false) Integer page) {
+
+        perPage = perPage == null ? 10 : perPage;
+        page = page == null ? 1 : page;
+
+        // เรียก searchNews จาก Service
+        Page<NewsDTO> pageOutput = newsService.searchNews(keyword, PageRequest.of(page - 1, perPage));
+
+        HttpHeaders responseHeader = new HttpHeaders();
+        responseHeader.set("x-total-count", String.valueOf(pageOutput.getTotalElements()));
+
+        return new ResponseEntity<>(pageOutput.getContent(), responseHeader, HttpStatus.OK);
+    }
+
 }
