@@ -31,23 +31,13 @@ public class NewsServiceImpl implements NewsService {
     private NewsMapper newsMapper;
 
     @Override
-    public List<NewsDTO> getAllNews(String statusFilter) {
+    public List<NewsDTO> getAllNews() {
         List<News> allNews = newsDao.findAll();
         boolean isAdmin = isCurrentUserAdmin();
 
-        List<News> visibleNews = allNews.stream()
+        return allNews.stream()
                 .filter(news -> !news.isRemoved() || isAdmin)
-                .collect(Collectors.toList());
-
-        List<NewsDTO> allNewsDTOs = visibleNews.stream()
                 .map(newsMapper::toNewsDTO)
-                .collect(Collectors.toList());
-
-        if (statusFilter == null || statusFilter.equalsIgnoreCase("all")) {
-            return allNewsDTOs;
-        }
-        return allNewsDTOs.stream()
-                .filter(news -> news.getStatus() != null && news.getStatus().equalsIgnoreCase(statusFilter))
                 .collect(Collectors.toList());
     }
 
@@ -117,16 +107,8 @@ public class NewsServiceImpl implements NewsService {
         comment.setImage(request.getImage());
         comment.setTime(Instant.now());
         comment.setVote(Vote.valueOf(request.getVote().toUpperCase()));
-        news.addComment(comment);
-        comment.setNews(news);
 
         news.addComment(comment);
-
-        if (comment.getVote() == Vote.REAL) {
-            news.setRealVotes(news.getRealVotes() + 1);
-        } else {
-            news.setFakeVotes(news.getFakeVotes() + 1);
-        }
 
         News updatedNews = newsDao.save(news);
         return newsMapper.toNewsDTO(updatedNews);
@@ -162,15 +144,16 @@ public class NewsServiceImpl implements NewsService {
         Page<News> newsPage;
         boolean isAdmin = isCurrentUserAdmin();
 
+        // กรณีที่มี keyword
         if (title != null && !title.isBlank()) {
-            // มี keyword - ค้นหา
             if (isAdmin) {
                 newsPage = newsDao.searchByKeywordIncludingRemoved(title, pageable);
             } else {
                 newsPage = newsDao.searchByKeyword(title, pageable);
             }
-        } else {
-            // ไม่มี keyword - แสดงทั้งหมด
+        }
+        // กรณีที่ไม่มี keyword
+        else {
             if (isAdmin) {
                 newsPage = newsDao.findAll(pageable);
             } else {

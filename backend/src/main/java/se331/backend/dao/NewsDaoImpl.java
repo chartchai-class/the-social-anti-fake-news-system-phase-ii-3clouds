@@ -10,7 +10,6 @@ import se331.backend.entity.News;
 import se331.backend.repository.NewsRepository;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 public class NewsDaoImpl implements NewsDao {
@@ -38,35 +37,21 @@ public class NewsDaoImpl implements NewsDao {
         newsRepository.deleteById(id);
     }
 
-    // สำหรับ normal users
+    // สำหรับ normal users - ไม่ filter removed
     @Override
     public Page<News> searchByKeyword(String keyword, Pageable pageable) {
-        // ใช้ LinkedHashSet เพื่อเก็บลำดับ
         Set<News> results = new LinkedHashSet<>();
 
-        // ค้นหาจาก topic
         List<News> topicResults = newsRepository.findByRemovedFalseAndTopicContainingIgnoreCase(keyword, Pageable.unpaged()).getContent();
         results.addAll(topicResults);
 
-        // ค้นหาจาก shortDetail
         List<News> shortDetailResults = newsRepository.findByRemovedFalseAndShortDetailContainingIgnoreCase(keyword, Pageable.unpaged()).getContent();
         results.addAll(shortDetailResults);
 
-        // ค้นหาจาก reporter
         List<News> reporterResults = newsRepository.findByRemovedFalseAndReporterContainingIgnoreCase(keyword, Pageable.unpaged()).getContent();
         results.addAll(reporterResults);
 
-        // แปลง Set เป็น List
-        List<News> combinedList = new ArrayList<>(results);
-
-        // คำนวณ pagination
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), combinedList.size());
-
-        List<News> pageContent = start >= combinedList.size() ?
-                List.of() : combinedList.subList(start, end);
-
-        return new PageImpl<>(pageContent, pageable, combinedList.size());
+        return createPageFromList(new ArrayList<>(results), pageable);
     }
 
     @Override
@@ -74,39 +59,35 @@ public class NewsDaoImpl implements NewsDao {
         return newsRepository.findByRemovedFalse(pageable);
     }
 
-    // สำหรับ admin
+    // สำหรับ admin - รวม removed
     @Override
     public Page<News> searchByKeywordIncludingRemoved(String keyword, Pageable pageable) {
-        // ใช้ LinkedHashSet เพื่อเก็บลำดับ
         Set<News> results = new LinkedHashSet<>();
 
-        // ค้นหาจาก topic
         List<News> topicResults = newsRepository.findByTopicContainingIgnoreCase(keyword, Pageable.unpaged()).getContent();
         results.addAll(topicResults);
 
-        // ค้นหาจาก shortDetail
         List<News> shortDetailResults = newsRepository.findByShortDetailContainingIgnoreCase(keyword, Pageable.unpaged()).getContent();
         results.addAll(shortDetailResults);
 
-        // ค้นหาจาก reporter
         List<News> reporterResults = newsRepository.findByReporterContainingIgnoreCase(keyword, Pageable.unpaged()).getContent();
         results.addAll(reporterResults);
 
-        // แปลง Set เป็น List
-        List<News> combinedList = new ArrayList<>(results);
-
-        // คำนวณ pagination
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), combinedList.size());
-
-        List<News> pageContent = start >= combinedList.size() ?
-                List.of() : combinedList.subList(start, end);
-
-        return new PageImpl<>(pageContent, pageable, combinedList.size());
+        return createPageFromList(new ArrayList<>(results), pageable);
     }
 
     @Override
     public Page<News> findAll(Pageable pageable) {
         return newsRepository.findAll(pageable);
+    }
+
+    // Helper method เพื่อลด code duplication
+    private Page<News> createPageFromList(List<News> list, Pageable pageable) {
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), list.size());
+
+        List<News> pageContent = start >= list.size() ? List.of() : list.subList(start, end);
+
+        return new PageImpl<>(pageContent, pageable, list.size());
     }
 }

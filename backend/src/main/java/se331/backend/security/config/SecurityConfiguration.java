@@ -52,11 +52,10 @@ public class SecurityConfiguration {
                             // removed จำเป็นต้องเป็น admin
                             .requestMatchers(HttpMethod.GET, "/api/news/removed").hasRole("ADMIN")
 
-                            // เพิ่ม search endpoint - เปิดสาธารณะ
+                            // ⭐ เปิดสาธารณะสำหรับข่าวทั่วไป - ย้ายขึ้นมาก่อน
                             .requestMatchers(HttpMethod.GET, "/api/news/search").permitAll()
-
-                            // เปิดสาธารณะสำหรับข่าวทั่วไป
                             .requestMatchers(HttpMethod.GET, "/api/news").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/api/news/{id}").permitAll()
                             .requestMatchers(HttpMethod.GET, "/api/news/**").permitAll()
 
                             // 3. ดึงคอมเมนต์ (GET /api/comments/news/{newsId})
