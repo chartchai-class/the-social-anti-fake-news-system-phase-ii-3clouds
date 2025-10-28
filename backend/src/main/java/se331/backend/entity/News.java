@@ -18,7 +18,7 @@ public class News {
 
     private String topic;
 
-    @Lob
+    @Column(length = 4000)
     private String shortDetail;
 
     @Lob

@@ -2,6 +2,8 @@ package se331.backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,33 +25,19 @@ import java.util.stream.Collectors;
 public class NewsServiceImpl implements NewsService {
 
     @Autowired
-    private NewsDao newsDao; // Inject DAO
+    private NewsDao newsDao;
 
     @Autowired
     private NewsMapper newsMapper;
 
     @Override
-    public List<NewsDTO> getAllNews(String statusFilter) {
-        // 1. ดึงข้อมูลจาก DAO
+    public List<NewsDTO> getAllNews() {
         List<News> allNews = newsDao.findAll();
-
         boolean isAdmin = isCurrentUserAdmin();
 
-        List<News> visibleNews = allNews.stream()
+        return allNews.stream()
                 .filter(news -> !news.isRemoved() || isAdmin)
-                .collect(Collectors.toList());
-
-        // 2. แปลง (Logic เหมือนเดิม)
-        List<NewsDTO> allNewsDTOs = visibleNews.stream()
                 .map(newsMapper::toNewsDTO)
-                .collect(Collectors.toList());
-
-        // 3. กรอง (Logic เหมือนเดิม)
-        if (statusFilter == null || statusFilter.equalsIgnoreCase("all")) {
-            return allNewsDTOs;
-        }
-        return allNewsDTOs.stream()
-                .filter(news -> news.getStatus() != null && news.getStatus().equalsIgnoreCase(statusFilter))
                 .collect(Collectors.toList());
     }
 
@@ -66,7 +54,7 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     public NewsDTO getNewsById(Long id) {
-        News news = newsDao.findById(id) // เรียกผ่าน DAO
+        News news = newsDao.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("News not found with id: " + id));
 
         if (news.isRemoved() && !isCurrentUserAdmin()) {
@@ -103,7 +91,7 @@ public class NewsServiceImpl implements NewsService {
         news.setDateTime(createdAt);
         news.setRemoved(false);
 
-        News savedNews = newsDao.save(news); // เรียกผ่าน DAO
+        News savedNews = newsDao.save(news);
         return newsMapper.toNewsDTO(savedNews);
     }
 
@@ -119,22 +107,10 @@ public class NewsServiceImpl implements NewsService {
         comment.setImage(request.getImage());
         comment.setTime(Instant.now());
         comment.setVote(Vote.valueOf(request.getVote().toUpperCase()));
-        news.addComment(comment);
-        comment.setNews(news);
 
-        // 1. เพิ่มคอมเมนต์ลง List
         news.addComment(comment);
 
-        // 2.อัปเดตคะแนนโหวตใน News
-        if (comment.getVote() == Vote.REAL) {
-            news.setRealVotes(news.getRealVotes() + 1);
-        } else {
-            news.setFakeVotes(news.getFakeVotes() + 1);
-        }
-
-        // 3. บันทึก News (ซึ่งจะบันทึก Comment ใหม่ และ อัปเดต Vote counts ไปพร้อมกัน)
         News updatedNews = newsDao.save(news);
-
         return newsMapper.toNewsDTO(updatedNews);
     }
 
@@ -161,6 +137,31 @@ public class NewsServiceImpl implements NewsService {
 
         news.removeComment(targetComment);
         newsDao.save(news);
+    }
+
+    @Override
+    public Page<NewsDTO> getNews(String title, Pageable pageable) {
+        Page<News> newsPage;
+        boolean isAdmin = isCurrentUserAdmin();
+
+        // กรณีที่มี keyword
+        if (title != null && !title.isBlank()) {
+            if (isAdmin) {
+                newsPage = newsDao.searchByKeywordIncludingRemoved(title, pageable);
+            } else {
+                newsPage = newsDao.searchByKeyword(title, pageable);
+            }
+        }
+        // กรณีที่ไม่มี keyword
+        else {
+            if (isAdmin) {
+                newsPage = newsDao.findAll(pageable);
+            } else {
+                newsPage = newsDao.findAllVisible(pageable);
+            }
+        }
+
+        return newsPage.map(newsMapper::toNewsDTO);
     }
 
     private boolean isCurrentUserAdmin() {
