@@ -62,7 +62,7 @@ public class InitApp implements CommandLineRunner {
                 "User",
                 "member",
                 "https://pbs.twimg.com/media/GuLUfQfXsAA5IfT.jpg",
-                List.of(Role.ROLE_MEMBER, Role.ROLE_READER) // Member มี 2 Roles
+                List.of(Role.ROLE_MEMBER)
         );
         seedUserIfMissing(
                 "reader",

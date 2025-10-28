@@ -114,7 +114,7 @@
                             </tr>
                         </thead>
 
-                        <tbody class="bg-white divide-y divide-gray-100">
+                        <tbody class="bg-white divide-y divide-gray-200">
                             <tr v-for="user in userStore.users" :key="user.id"
                                 class="hover:bg-blue-50/50 transition-colors duration-150">
 
@@ -152,23 +152,41 @@
                                 <td class="px-6 py-4">
                                     <button v-if="canPromote(user)" @click="handlePromote(user.id!)"
                                         :disabled="isPromotingUser === user.id"
-                                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none focus:outline-none focus:ring-4 focus:ring-blue-300">
+                                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none focus:outline-none focus:ring-4 focus:ring-cyan-300">
                                         <span v-if="isPromotingUser === user.id" class="flex items-center">
                                             <span
                                                 class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
                                             Upgrading...
                                         </span>
                                         <span v-else class="flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                            <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
                                                 viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                                            </svg>
+                                            </svg> -->
                                             Upgrade to Member
                                         </span>
                                     </button>
 
-                                    <span v-else
+                                    <button v-if="canDemote(user)" @click="handleDemote(user.id!)"
+                                        :disabled="isPromotingUser === user.id || isDemotingUser === user.id" 
+                                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none focus:outline-none focus:ring-4 focus:ring-emerald-300">
+                                        <span v-if="isDemotingUser === user.id" class="flex items-center">
+                                            <span
+                                                class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-1"></span>
+                                            Downgrading...
+                                        </span>
+                                        <span v-else class="flex items-center">
+                                            <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg> -->
+                                            Demote to Reader
+                                        </span>
+                                    </button>
+
+                                    <span v-if="!canPromote(user) && !canDemote(user)"
                                         class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor">
@@ -218,6 +236,7 @@ const isAdmin = computed(() => authStore.hasRole('ROLE_ADMIN'));
 
 // State for promote button loading
 const isPromotingUser = ref<number | null>(null);
+const isDemotingUser = ref<number | null>(null);
 
 // Fetch all users on mount (admin only)
 onMounted(() => {
@@ -229,9 +248,9 @@ onMounted(() => {
 // Role badge styling
 const getRoleClass = (role: Role | string): string => {
     const styles: Record<string, string> = {
-        'ROLE_ADMIN': 'bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md',
-        'ROLE_MEMBER': 'bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md',
-        'ROLE_READER': 'bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md'
+        'ROLE_ADMIN': 'bg-gradient-to-r from-rose-500 to-rose-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md',
+        'ROLE_MEMBER': 'bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md',
+        'ROLE_READER': 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md'
     };
     return styles[role] || 'bg-gradient-to-r from-gray-400 to-gray-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md';
 };
@@ -257,6 +276,25 @@ const handlePromote = async (userId: number) => {
             isPromotingUser.value = null;
         }
     }
+};
+// เช็คว่าเป็น MEMBER แต่ไม่ใช่ ADMIN
+const canDemote = (user: UserAuthDTO): boolean => {
+    return user.roles.includes('ROLE_MEMBER') && !user.roles.includes('ROLE_ADMIN');
+}
+
+// Handle Demote
+const handleDemote = async (userId: number) => {
+  if (confirm('Are you sure you want to demote this user back to READER?')) {
+    isDemotingUser.value = userId;
+    try {
+      await userStore.demoteUser(userId);
+    } catch (error) {
+      console.error("Demotion failed:", error);
+       alert('Failed to demote user. Please try again.');
+    } finally {
+      isDemotingUser.value = null;
+    }
+  }
 };
 
 // Handle logout
