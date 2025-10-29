@@ -489,7 +489,7 @@ watchEffect(() => {
     _limit: perPageValue, // แปลง perPage → _limit
   }
 
-  // 🔍 SEARCH: ถ้ามี keyword search ส่ง parameter "title"
+  // SEARCH: ถ้ามี keyword search ส่ง parameter "title"
   if (searchValue) {
     params.title = searchValue
   }
@@ -515,6 +515,11 @@ watchEffect(() => {
     //   - ส่ง → params.status = 'removed'
     // ทั้งสองวิธีใช้ backend endpoint, เดียวกัน Backend รับ parameter "status" และกรองข่าวที่ถูกลบ
     }
+  }
+
+    // เพิ่ม includeRemoved สำหรับ Admin เมื่อดูข่าวที่ถูกลบ
+  if (filterValue === 'removed' || statusSearchValue === 'removed') {
+    params.includeRemoved = true
   }
 
   // เริ่มโหลดข้อมูล

@@ -65,8 +65,12 @@ export default {
     return apiClient.get('/api/news/removed');
   },
 
-  getNewsById(id: number) {
-    return apiClient.get(`/api/news/${id}`);
+  getNewsById(id: number, includeRemoved: boolean = false) {
+    const params: any = {}
+    if (includeRemoved) {
+      params.includeRemoved = true
+    }
+    return apiClient.get(`/api/news/${id}`, { params })
   },
 
   createNews(payload: {
@@ -131,6 +135,7 @@ export default {
     status?: string;
     _page?: number;
     _limit?: number;
+    includeRemoved?: boolean;
   }) {
     return apiClient.get('/api/news/search', { params });
   }
