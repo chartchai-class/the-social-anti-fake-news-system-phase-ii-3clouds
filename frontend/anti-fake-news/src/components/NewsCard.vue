@@ -335,12 +335,14 @@ const handleDeleteNews = async (event: MouseEvent) => {
       // เรียก API ลบข่าว
       await newsStore.removeNews(props.news.id);
 
-      // งข้อความสำเร็จ
+      // แสดงข้อความสำเร็จ
       messageStore.updateMessage(`News "${props.news.topic}" removed successfully.`);
       setTimeout(() => messageStore.resetMessage(), 3000);
 
-      // Emit event ไปยัง parent component
-      emit('news-removed', props.news.id);
+      // รีเฟรชหน้าเว็บทั้งหมดหลังจากลบสำเร็จ
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
 
     } catch (error: unknown) {
       console.error('Error removing news (in component):', error);
@@ -360,25 +362,3 @@ const handleDeleteNews = async (event: MouseEvent) => {
   }
 };
 </script>
-
-<style scoped>
-/* 
-  Utility classes ป้องกันข้อความยาวเกิน
-*/
-
-/* จำกัด 2 บรรทัด */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* จำกัด 3 บรรทัด */
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>

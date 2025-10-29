@@ -84,12 +84,15 @@ public class CommentController {
                 .news(news)
                 .build();
 
-        // บันทึก comment และอัปเดต vote count
-        news.addComment(comment);
+        // บันทึก comment
+        Comment savedComment = commentService.save(comment);
+
+        // เพิ่ม comment ไปยัง news และบันทึก
+        news.addComment(savedComment);
         newsRepository.save(news);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(convertToDTO(comment));
+                .body(convertToDTO(savedComment));
     }
 
     /**
@@ -111,8 +114,8 @@ public class CommentController {
 
         return ResponseEntity.ok(new Object() {
             public final Long newsId = news.getId();
-            public final int realVotes = news.getRealVotes();
-            public final int fakeVotes = news.getFakeVotes();
+            public final int real = news.getRealVotes(); // real
+            public final int fake = news.getFakeVotes(); // fake
             public final int totalComments = news.getComments().size();
         });
     }
@@ -144,4 +147,5 @@ public class CommentController {
 
         return dto;
     }
+
 }
