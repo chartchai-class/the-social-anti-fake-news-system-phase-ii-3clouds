@@ -50,7 +50,7 @@ public class SecurityConfiguration {
 
                             // 2. อ่าน News (GET)
                             // removed จำเป็นต้องเป็น admin
-                            .requestMatchers(HttpMethod.GET, "/api/news/removed").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.GET, "/api/news/removed").permitAll()
 
                             // ⭐ เปิดสาธารณะสำหรับข่าวทั่วไป - ย้ายขึ้นมาก่อน
                             .requestMatchers(HttpMethod.GET, "/api/news/search").permitAll()

@@ -17,6 +17,6 @@ public interface NewsService {
     void deleteNews(Long id);
     void deleteCommentFromNews(Long newsId, Long commentId);
 
-    // ลบ parameter status ออก
-    Page<NewsDTO> getNews(String title, Pageable pageable);
+    // *** อัปเดต: เพิ่ม parameter status ***
+    Page<NewsDTO> getNews(String title, String status, Pageable pageable);
 }

@@ -13,11 +13,20 @@ public interface NewsDao {
     News save(News news);
     void deleteById(Long id);
 
-    // search for normal users (exclude removed)
+    // ค้นหาสำหรับ normal users (ไม่รวม removed)
     Page<News> searchByKeyword(String keyword, Pageable pageable);
     Page<News> findAllVisible(Pageable pageable);
 
-    // search for admin (include removed)
+    // ค้นหาสำหรับ admin (รวม removed)
     Page<News> searchByKeywordIncludingRemoved(String keyword, Pageable pageable);
     Page<News> findAll(Pageable pageable);
+
+    // *** เพิ่มใหม่: ค้นหาตามสถานะ ***
+    // สำหรับ normal users - ค้นหาตามสถานะ (ไม่รวม removed)
+    Page<News> searchByKeywordAndStatus(String keyword, String status, Pageable pageable);
+    Page<News> findAllVisibleByStatus(String status, Pageable pageable);
+
+    // สำหรับ admin - ค้นหาตามสถานะ (รวม removed)
+    Page<News> searchByKeywordAndStatusIncludingRemoved(String keyword, String status, Pageable pageable);
+    Page<News> findAllByStatus(String status, Pageable pageable);
 }
