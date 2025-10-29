@@ -1,5 +1,3 @@
-// src/service/NewsService.ts
-
 import apiClient from './AxiosClient';
 import type { InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../stores/auth';
@@ -59,8 +57,8 @@ export default {
   /**
    * ดึงข้อมูลข่าวสารทั้งหมดจาก backend
    */
-  getNews() {
-    return apiClient.get('/api/news');
+  getNews(params?: any) {
+    return apiClient.get('/api/news', { params })
   },
 
   getRemovedNews() {
@@ -81,6 +79,7 @@ export default {
   }) {
     return apiClient.post('/api/news', payload);
   },
+
   /**
    * ดึง comments ของข่าวตาม newsId (รองรับ pagination)
    */
@@ -122,6 +121,17 @@ export default {
    */
   removeNews(id: number) {
     return apiClient.delete(`/api/news/${id}`);
-  }
+  },
 
+  /**
+   * ค้นหาข่าวจาก backend (ใหม่)
+   */
+  searchNews(params: {
+    title?: string;
+    status?: string;
+    _page?: number;
+    _limit?: number;
+  }) {
+    return apiClient.get('/api/news/search', { params });
+  }
 };

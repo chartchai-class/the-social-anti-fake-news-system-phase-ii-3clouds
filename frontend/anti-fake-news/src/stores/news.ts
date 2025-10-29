@@ -1,15 +1,23 @@
 import { defineStore } from 'pinia'
 import apiClient from '../services/NewsService'
 
+// ===== TypeScript Interfaces (กำหนดโครงสร้างข้อมูล) =====
+
+/**
+ * โครงสร้างข้อมูล Comment (ความคิดเห็น/โหวต)
+ */
 export interface Comment {
   id: number
   username: string
   text: string
   image: string | null
   time: string
-  vote: 'real' | 'fake'
+  vote: 'real' | 'fake' // โหวตว่าข่าวจริงหรือปลอม
 }
 
+/**
+ * โครงสร้างข้อมูล News (ข่าว)
+ */
 export interface News {
   id: number
   topic: string
@@ -19,12 +27,13 @@ export interface News {
   reporter: string
   dateTime: string
   voteSummary: {
-    real: number
-    fake: number
+    real: number // จำนวนโหวต "จริง"
+    fake: number // จำนวนโหวต "ปลอม"
   }
   totalVotes: number
   comments: Comment[]
-  status?: 'fake' | 'not fake' | 'equal' | 'removed'
+  status?: 'fake' | 'not fake' | 'equal' | 'removed' // สถานะข่าว
+  removed?: boolean // ถูกลบหรือไม่
 }
 
 export interface VoteSummary {
@@ -34,25 +43,34 @@ export interface VoteSummary {
 
 export type Vote = 'real' | 'fake'
 
+/**
+ * State ของ Store (ข้อมูลที่เก็บใน Store)
+ */
 interface NewsState {
-  allNews: News[]
-  unsavedNews: News[]
-  removedNews: News[]
-  currentNews: News | null
-  loading: boolean
-  error: string | null
+  allNews: News[] // ข่าวปกติทั้งหมด (ไม่รวมที่ถูกลบ)
+  unsavedNews: News[] // ข่าวที่ยังไม่ได้บันทึกใน backend
+  removedNews: News[] // ข่าวที่ถูกลบ (สำหรับ admin)
+  currentNews: News | null // ข่าวที่กำลังดูอยู่
+  loading: boolean // กำลังโหลดข้อมูลหรือไม่
+  error: string | null // ข้อความ error (ถ้ามี)
 }
 
+/**
+ * โครงสร้าง Comment จาก Backend (อาจแตกต่างจาก interface Comment)
+ */
 type CommentResponse = {
   id?: number
   username?: string
-  user?: string
+  user?: string // บาง API ใช้ชื่อ "user" แทน "username"
   text?: string
   image?: string | null
   time?: string
   vote?: string
 }
 
+/**
+ * ข้อมูลสำหรับสร้างข่าวใหม่
+ */
 export interface CreateNewsPayload {
   topic: string
   shortDetail: string
@@ -62,7 +80,13 @@ export interface CreateNewsPayload {
   dateTime?: string
 }
 
+// ===== Pinia Store Definition =====
+
+/**
+ * News Store - จัดการข้อมูลข่าวทั้งหมด
+ */
 export const useNewsStore = defineStore('news', {
+  // ===== State (ข้อมูลที่เก็บ) =====
   state: (): NewsState => ({
     allNews: [],
     unsavedNews: [],
@@ -72,17 +96,25 @@ export const useNewsStore = defineStore('news', {
     error: null,
   }),
 
+  // ===== Getters (คำนวณข้อมูลจาก state) =====
   getters: {
+    /**
+     * รวมข่าวปกติกับข่าวที่ยังไม่ได้บันทึก
+     */
     getCombinedNews: (state): News[] => {
       return [...state.allNews, ...state.unsavedNews]
     },
 
+    /**
+     * หาข่าวตาม ID และคำนวณ status
+     */
     getNewsById: (state) => {
       return (id: number): News | undefined => {
         const combinedNews = [...state.allNews, ...state.unsavedNews]
         const newsItem = combinedNews.find((news) => news.id === id)
         if (!newsItem) return undefined
 
+        // คำนวณ status จากจำนวนโหวต
         const realVotes = newsItem.voteSummary?.real || 0
         const fakeVotes = newsItem.voteSummary?.fake || 0
 
@@ -103,14 +135,18 @@ export const useNewsStore = defineStore('news', {
       }
     },
 
+    /**
+     * FILTER: กรองข่าวตาม status
+     */
     getNewsWithStatus: (state) => {
       return (statusFilter: 'all' | 'fake' | 'not fake' | 'equal'): News[] => {
-        // กรองเฉพาะข่าวที่ไม่ได้ถูกลบ และไม่อยู่ใน removedNews
+        // กรองเฉพาะข่าวที่ไม่ถูกลบ
         const removedIds = new Set(state.removedNews.map(n => n.id));
         const combinedNews = [...state.allNews, ...state.unsavedNews].filter(
           (n) => n.status !== 'removed' && !removedIds.has(n.id)
         )
 
+        // คำนวณ status ให้ทุกข่าว
         const allNewsWithStatus = combinedNews.map((news) => {
           const realVotes = news.voteSummary?.real || 0
           const fakeVotes = news.voteSummary?.fake || 0
@@ -123,14 +159,19 @@ export const useNewsStore = defineStore('news', {
           return { ...news, status: calculatedStatus }
         })
 
+        // กรองตาม status ที่ต้องการ
         if (statusFilter === 'all') return allNewsWithStatus
         return allNewsWithStatus.filter((news) => news.status === statusFilter)
       }
     },
   },
 
+  // ===== Actions (ฟังก์ชันที่เปลี่ยนแปลง state) =====
   actions: {
-     async fetchNews() {
+    /**
+     * ดึงข่าวทั้งหมดจาก Backend
+     */
+    async fetchNews() {
       this.loading = true
       this.error = null
       try {
@@ -142,17 +183,17 @@ export const useNewsStore = defineStore('news', {
         const removed: News[] = []
         
         allData.forEach((news: News) => {
-          if (news.status === 'removed') {
+          if (news.status === 'removed' || news.removed) {
             removed.push(news)
           } else {
             activeNews.push(news)
           }
         })
         
-        // เก็บเฉพาะข่าวที่ไม่ถูกลบใน allNews
+        // เก็บข่าวปกติใน allNews
         this.allNews = activeNews
         
-        // อัปเดต removedNews สำหรับ Admin (ไม่ซ้ำ)
+        // เก็บข่าวที่ถูกลบใน removedNews (ไม่ให้ซ้ำ)
         removed.forEach((removedItem) => {
           if (!this.removedNews.some(n => n.id === removedItem.id)) {
             this.removedNews.push(removedItem)
@@ -167,6 +208,9 @@ export const useNewsStore = defineStore('news', {
       }
     },
 
+    /**
+     * สร้างข่าวใหม่
+     */
     async createNews(payload: CreateNewsPayload) {
       this.error = null
       try {
@@ -177,11 +221,13 @@ export const useNewsStore = defineStore('news', {
           const existingIndex = this.allNews.findIndex((newsItem) => newsItem.id === createdNews.id)
 
           if (existingIndex !== -1) {
+            // ถ้ามีอยู่แล้ว = update
             this.allNews[existingIndex] = {
               ...this.allNews[existingIndex],
               ...createdNews,
             }
           } else {
+            // ถ้ายังไม่มี = เพิ่มใหม่ (ไว้ด้านหน้าสุด)
             this.allNews.unshift({
               comments: [],
               totalVotes: 0,
@@ -190,6 +236,7 @@ export const useNewsStore = defineStore('news', {
             })
           }
         } else {
+          // ถ้าไม่ได้ข้อมูลกลับมา = โหลดข่าวทั้งหมดใหม่
           await this.fetchNews()
         }
 
@@ -201,6 +248,9 @@ export const useNewsStore = defineStore('news', {
       }
     },
 
+    /**
+     * ดึงข่าวตาม ID พร้อม comments
+     */
     async fetchNewsById(id: number) {
       this.loading = true
       this.error = null
@@ -213,10 +263,10 @@ export const useNewsStore = defineStore('news', {
         // ดึง comments แยกต่างหาก
         const commentsResponse = await apiClient.getCommentsByNewsId(id)
 
-        // ตรวจสอบว่ามีข้อมูล comments หรือไม่
+        // ประมวลผล comments
         const commentsData = commentsResponse.data?.content || commentsResponse.data || []
 
-        // แปลงข้อมูล comment และกำหนดค่าเริ่มต้นหากข้อมูลบางส่วนหายไป
+        // แปลงข้อมูล comment ให้ตรงกับ interface
         const comments = Array.isArray(commentsData)
           ? commentsData.map((comment: CommentResponse) => ({
               id: comment.id ?? 0,
@@ -234,7 +284,7 @@ export const useNewsStore = defineStore('news', {
           comments,
         }
 
-        // อัปเดตใน allNews ด้วยถ้ามีอยู่แล้ว
+        // อัปเดตใน allNews ด้วย (ถ้ามีอยู่แล้ว)
         const index = this.allNews.findIndex((n) => n.id === id)
         if (index !== -1 && this.currentNews) {
           this.allNews[index] = this.currentNews
@@ -251,6 +301,9 @@ export const useNewsStore = defineStore('news', {
       }
     },
 
+    /**
+     * ส่ง comment/vote
+     */
     async submitComment(
       newsId: number,
       data: {
@@ -279,11 +332,18 @@ export const useNewsStore = defineStore('news', {
       }
     },
 
+    /**
+     * เพิ่มข่าวที่ยังไม่ได้บันทึก (Local)
+     */
     addUnsavedNews(newNews: Omit<News, 'id'>) {
+      // สร้าง temporary ID (ติดลบเพื่อไม่ซ้ำกับ ID จริง)
       const tempId = Math.random() * -1000000 - Date.now()
       this.unsavedNews.push({ ...newNews, id: tempId })
     },
 
+    /**
+     * เพิ่ม comment ให้ข่าว (Local - ไม่ผ่าน Backend)
+     */
     addCommentToNews(
       newsId: number,
       user: string,
@@ -297,11 +357,12 @@ export const useNewsStore = defineStore('news', {
         return
       }
 
-      // ตรวจสอบให้แน่ใจว่า comments array มีอยู่
+      // ตรวจสอบว่ามี comments array หรือไม่
       if (!newsItem.comments) {
         newsItem.comments = []
       }
 
+      // สร้าง comment ID ใหม่
       const newCommentId =
         newsItem.comments.length > 0 ? Math.max(...newsItem.comments.map((c) => c.id)) + 1 : 1
 
@@ -328,25 +389,29 @@ export const useNewsStore = defineStore('news', {
       }
     },
 
+    /**
+     * ลบข่าว (Soft Delete)
+     */
     async removeNews(newsId: number) {
       this.error = null
       try {
+        // เรียก API ลบข่าว
         await apiClient.removeNews(newsId)
 
-        // หา news ก่อนลบ
+        // หาข่าวที่จะลบ
         const removedItem =
           this.allNews.find((n) => n.id === newsId) || this.unsavedNews.find((n) => n.id === newsId)
 
-        // ลบออกจาก allNews และ unsavedNews ก่อน
+        // ลบออกจาก allNews และ unsavedNews
         this.allNews = this.allNews.filter((n) => n.id !== newsId)
         this.unsavedNews = this.unsavedNews.filter((n) => n.id !== newsId)
 
-        // เพิ่มเข้า removedNews
+        // เพิ่มเข้า removedNews (ไม่ให้ซ้ำ)
         if (removedItem && !this.removedNews.some((n) => n.id === newsId)) {
           this.removedNews.push({ ...removedItem, status: 'removed' })
         }
 
-        // อัปเดต currentNews
+        // อัปเดต currentNews (ถ้ากำลังดูข่าวที่ลบอยู่)
         if (this.currentNews?.id === newsId) {
           this.currentNews.status = 'removed'
         }
@@ -357,6 +422,9 @@ export const useNewsStore = defineStore('news', {
       }
     },
     
+    /**
+     * ดึงข่าวที่ถูกลบทั้งหมด (สำหรับ Admin)
+     */
     async fetchRemovedNews() {
       this.loading = true
       this.error = null

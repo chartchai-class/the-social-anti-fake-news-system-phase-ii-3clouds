@@ -1,7 +1,7 @@
 <template>
   <div
     class="relative block bg-white shadow-lg rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 border-b-4 cursor-pointer"
-    :class="[
+    :class="[ 
       'transition-all duration-300',
       {
         // Active Statuses
@@ -30,7 +30,7 @@
         class="w-full h-48 object-cover transition-transform duration-300 hover:scale-105" @error="handleImageError">
       <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4">
         <h3 class="text-white text-lg font-bold text-center drop-shadow-lg line-clamp-2">
-          <span v-html="highlightText(news.topic, searchQuery)"></span>
+          {{ news.topic }}
         </h3>
       </div>
     </div>
@@ -45,7 +45,7 @@
           </path>
         </svg>
         <h3 class="text-gray-500 text-lg text-center font-bold px-4 line-clamp-2">
-          <span v-html="highlightText(news.topic, searchQuery)"></span>
+          {{ news.topic }}
         </h3>
       </div>
     </div>
@@ -84,7 +84,7 @@
     <!-- Content Section -->
     <div class="p-6 pt-0">
       <p class="text-gray-600 mb-4 line-clamp-3 leading-relaxed">
-        <span v-html="highlightText(news.shortDetail, searchQuery)"></span>
+        {{ news.shortDetail }}
       </p>
 
       <!-- Meta Information -->
@@ -94,7 +94,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
           </svg>
-          <span v-html="highlightText(news.reporter, searchQuery)"></span>
+          {{ news.reporter }}
         </p>
         <p class="flex items-center">
           <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,14 +124,6 @@
         </svg>
       </div>
 
-      <!-- Search Match Indicator -->
-      <div v-if="searchQuery && hasMatch" class="mt-3 flex items-center text-xs text-blue-600">
-        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        Search match found
-      </div>
     </div>
   </div>
 
@@ -154,12 +146,9 @@ import { useAuthStore } from '../stores/auth';
 
 interface Props {
   news: News;
-  searchQuery?: string;
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  searchQuery: ''
-});
+const props = withDefaults(defineProps<Props>(), {});
 
 const emit = defineEmits<{
   (e: 'news-removed', newsId: number): void
@@ -174,30 +163,7 @@ const messageStore = useMessageStore();
 
 const isAdmin = computed(() => authStore.hasRole('ROLE_ADMIN'));
 
-// Highlight function
-const highlightText = (text: string, searchQuery: string): string => {
-  if (!searchQuery || !text) return text;
-
-  const query = searchQuery.trim();
-  if (!query) return text;
-
-  // Escape special regex characters and create case-insensitive regex
-  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`(${escapedQuery})`, 'gi');
-
-  return text.replace(regex, '<mark class="bg-yellow-200 text-yellow-900 px-0.5 py-0.5 rounded font-semibold">$1</mark>');
-};
-
-// Check if search query matches any content
-const hasMatch = computed(() => {
-  if (!props.searchQuery) return false;
-
-  const query = props.searchQuery.toLowerCase();
-  return props.news.topic.toLowerCase().includes(query) ||
-    props.news.shortDetail.toLowerCase().includes(query) ||
-    props.news.fullDetail.toLowerCase().includes(query) ||
-    props.news.reporter.toLowerCase().includes(query);
-});
+// Remove highlightText function
 
 const handleNewsClick = async () => {
   try {
@@ -259,8 +225,6 @@ const handleDeleteNews = async (event: MouseEvent) => {
 
       messageStore.updateMessage(`News "${props.news.topic}" removed successfully.`);
       setTimeout(() => messageStore.resetMessage(), 3000);
-
-      // Card จะหายไปเองเมื่อ State update
 
     } catch (error: unknown) {
       console.error('Error removing news (in component):', error);
