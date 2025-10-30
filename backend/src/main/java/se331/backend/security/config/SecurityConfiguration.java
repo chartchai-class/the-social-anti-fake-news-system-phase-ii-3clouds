@@ -42,6 +42,9 @@ public class SecurityConfiguration {
                 .csrf((crsf) -> crsf.disable())
                 .authorizeHttpRequests((authorize) -> {
                     authorize
+                            // 🌟 แก้ไข: อนุญาตให้เข้าถึง Root Path (/) ได้แบบสาธารณะ เพื่อแก้ปัญหา 403 ที่ Root
+                            .requestMatchers("/").permitAll()
+
                             .requestMatchers(HttpMethod.GET, "/api/v1/auth/check-username").permitAll()
                             .requestMatchers(HttpMethod.GET, "/api/v1/auth/check-email").permitAll()
 
@@ -103,7 +106,7 @@ public class SecurityConfiguration {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:*",           // ทุก port บน localhost
-                "http://20.198.178.0:*",        // ทุก port บน IP นี้
+                "http://20.198.178.0:*",        // ทุก port บน IP นี้ (VM)
                 "http://13.212.6.216:*"         // ทุก port บน IP อื่น
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
