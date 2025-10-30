@@ -1,41 +1,34 @@
-name: Deploy Frontend
+name: Deploy Frontend (Monorepo)
 on:
   push:
     branches:
       - prod
-    paths: # *** เพิ่มส่วนนี้: กำหนดให้รันเมื่อมีการแก้ไขใน frontend/anti-fake-news/ เท่านั้น ***
-      - 'frontend/anti-fake-news/**'
+    paths:
+      - 'frontend/anti-fake-news/**' # ⬅️ Trigger เมื่อ Frontend เปลี่ยน
 jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      - name: Build and push
+          
+      - name: Build and push Frontend
         uses: docker/build-push-action@v6
         with:
-          context: ./frontend/anti-fake-news # *** แก้ไข: ชี้ไปที่โฟลเดอร์ frontend/anti-fake-news ***
+          context: ./frontend/anti-fake-news # ⬅️ ชี้ไปที่โฟลเดอร์แอป Frontend
           push: true
           tags: rattikan042/se331-frontend:latest
-      - name: copy file via ssh password
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.HOST_SERVER }}
-          username: ${{ secrets.HOST_USER_NAME }}
-          key: ${{ secrets.HOST_SSH_PRIVATE_KEY }}
-          port: 22
-          source: "frontend/anti-fake-news/docker-compose.yml" # *** แก้ไข: คัดลอกจากโฟลเดอร์ frontend/anti-fake-news ***
-          target: "/home/ubuntu/frontend"
-      - name: docker compose
+          
+      - name: Create remote frontend directory
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST_SERVER }}
@@ -43,10 +36,30 @@ jobs:
           key: ${{ secrets.HOST_SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            mkdir -p /home/ubuntu/frontend
-            cd /home/ubuntu/frontend
-            echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+            # ใช้ตัวแปรชื่อผู้ใช้และสร้างโฟลเดอร์
+            mkdir -p /home/${{ secrets.HOST_USER_NAME }}/frontend
+            
+      - name: Copy docker-compose via SCP
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.HOST_SERVER }}
+          username: ${{ secrets.HOST_USER_NAME }}
+          key: ${{ secrets.HOST_SSH_PRIVATE_KEY }}
+          port: 22
+          source: "frontend/anti-fake-news/docker-compose.yml" # ⬅️ Source Path
+          target: "/home/${{ secrets.HOST_USER_NAME }}/frontend" # ⬅️ Target Path
+          overwrite: true
+          
+      - name: Deploy with Docker Compose
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST_SERVER }}
+          username: ${{ secrets.HOST_USER_NAME }}
+          key: ${{ secrets.HOST_SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /home/${{ secrets.HOST_USER_NAME }}/frontend
+            echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login --username "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
             docker compose down
             docker compose pull
             docker compose up -d
-            rm -rf /home/ubuntu/frontend
