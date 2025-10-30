@@ -8,7 +8,6 @@ import { useRouter } from 'vue-router';
 import { useMessageStore } from '../stores/message';
 
 // --- Validation Schema ---
-// (ใช้ Username แทน Email)
 const validationSchema = yup.object({
     identifier: yup
         .string()
@@ -22,7 +21,7 @@ const validationSchema = yup.object({
 const { errors, handleSubmit } = useForm({
     validationSchema,
     initialValues: {
-        username: "",
+        identifier: "", // แก้ไขจาก username เป็น identifier
         password: ""
     }
 });
@@ -34,8 +33,8 @@ const { value: password } = useField<string>('password');
 // --- Stores and Router ---
 const authStore = useAuthStore();
 const router = useRouter();
-const messageStore = useMessageStore(); // (Store สำหรับแสดง Error)
-const isSubmitting = ref(false); // (State สำหรับ Loading ตอนกด Login)
+const messageStore = useMessageStore();
+const isSubmitting = ref(false);
 const messageType = ref<'success' | 'error' | null>(null);
 
 // --- Submit Handler ---
@@ -68,7 +67,6 @@ const onSubmit = handleSubmit(async (values) => {
         isSubmitting.value = false;
     }
 });
-
 </script>
 
 <template>
@@ -100,7 +98,6 @@ const onSubmit = handleSubmit(async (values) => {
                             <InputText id="identifier" type="text" v-model="identifier" placeholder="Username or Email"
                                 :error="errors['identifier']" />
                         </div>
-
                     </div>
 
                     <div>
@@ -149,7 +146,6 @@ const onSubmit = handleSubmit(async (values) => {
                 </p>
 
             </div>
-
         </div>
     </div>
 </template>
