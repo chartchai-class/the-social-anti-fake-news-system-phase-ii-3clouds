@@ -101,7 +101,12 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("http://localhost:5173", "http://13.212.6.216:8001"));
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:5173",
+                "http://20.198.178.0:8001",    // ← เปลี่ยนเป็น IP เรา
+                "http://20.198.178.0",         // ← เพิ่มนี้ด้วย (ไม่มี port)
+                "http://localhost:8080"        // ← สำหรับ local development
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("x-total-count"));
