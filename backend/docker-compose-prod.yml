@@ -1,23 +1,54 @@
+version: '3.8'
+
 services:
+  # Database Service
   db:
     image: mysql
+    container_name: backend-db-1 # กำหนดชื่อ container ที่ชัดเจน
     ports:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: projectII # ควรใส่ชื่อ DB เพื่อให้ Spring Boot เชื่อมต่อได้ง่าย
+
+    # FIX 1: เพิ่ม Healthcheck เพื่อบอกว่า DB พร้อมเมื่อไหร่
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
+      timeout: 5s
+      retries: 5
+      start_period: 20s # รอนานขึ้นหน่อยเพื่อให้ DB เริ่มต้น
+
+    volumes:
+      - mysql_data:/var/lib/mysql # ควรมี Volume เพื่อเก็บข้อมูล DB
+
+  # PHPMyAdmin Service
   phpmyadmin:
     image: phpmyadmin
+    container_name: backend-phpmyadmin-1
     ports:
       - "9000:80"
     environment:
-      PMA_HOST: db
+      PMA_HOST: db # ใช้ชื่อ Service "db" ใน Compose Network
       MYSQL_ROOT_PASSWORD: password
+    depends_on:
+      - db
+
+  # Backend Service
   backend:
     image: rattikan042/se331-backend:latest
+    container_name: backend-backend-1
     ports:
       - "8999:8080"
     environment:
+      # ใช้ชื่อ Environment Variable ที่คุณกำหนดใน Backend
       JAVA_PROFILE: prod,db
+
+    # FIX 2: เปลี่ยน Depends On เป็นการรอ Healthcheck (Critical Fix)
     depends_on:
-      - db
-    restart: on-failure
+      db:
+        condition: service_healthy # รอจนกว่า DB จะ HEALTHY
+
+    restart: unless-stopped # ใช้ unless-stopped ดีกว่า on-failure
+
+volumes:
+  mysql_data: # กำหนด Volume

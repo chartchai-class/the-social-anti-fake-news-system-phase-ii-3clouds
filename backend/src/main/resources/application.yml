@@ -4,7 +4,8 @@ spring:
   profiles:
     active: db
   datasource:
-    url: jdbc:mysql://localhost:3306/projectII?createDatabaseIfNotExist=true&autoReconnect=true&characterEncoding=UTF-8&allowMultiQueries=true&allowPublicKeyRetrieval=true&useSSL=false&useUnicode=true
+    # FIX 3: เปลี่ยน Hostname จาก localhost เป็นชื่อ Service ใน Docker Compose (db)
+    url: jdbc:mysql://db:3306/projectII?createDatabaseIfNotExist=true&autoReconnect=true&characterEncoding=UTF-8&allowMultiQueries=true&allowPublicKeyRetrieval=true&useSSL=false&useUnicode=true
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: password
