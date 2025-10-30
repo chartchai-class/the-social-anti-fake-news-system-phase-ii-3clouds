@@ -529,20 +529,21 @@ watchEffect(() => {
 
   // เรียก Backend API
   apiClient
-    .searchNews(params)
-    .then((response) => {
-      newsList.value = response.data || []
-      totalItems.value = parseInt(response.headers['x-total-count']) || newsList.value.length
-      console.log('✅ Received:', newsList.value.length, 'items')
-    })
-    .catch((error) => {
-      console.error('❌ Error:', error)
-      newsList.value = []
-      totalItems.value = 0
-    })
-    .finally(() => {
-      isDataLoading.value = false
-    })
+  .searchNews(params)
+  .then((response) => {
+    // แก้ตรงนี้: ตรวจสอบว่าเป็น array ก่อน
+    newsList.value = Array.isArray(response.data) ? response.data : []
+    totalItems.value = parseInt(response.headers['x-total-count']) || newsList.value.length
+    console.log('✅ Received:', newsList.value.length, 'items')
+  })
+  .catch((error) => {
+    console.error('❌ Error:', error)
+    newsList.value = []
+    totalItems.value = 0
+  })
+  .finally(() => {
+    isDataLoading.value = false
+  })
 })
 
 /**
