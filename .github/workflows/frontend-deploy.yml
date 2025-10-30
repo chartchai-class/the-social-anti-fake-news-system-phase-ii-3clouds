@@ -4,7 +4,7 @@ on:
     branches:
       - prod
     paths:
-      - 'frontend/anti-fake-news/**' # ⬅️ Trigger เมื่อ Frontend เปลี่ยน
+      - 'frontend/anti-fake-news/**' # Trigger เมื่อ Frontend เปลี่ยน
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -24,7 +24,7 @@ jobs:
       - name: Build and push Frontend
         uses: docker/build-push-action@v6
         with:
-          context: ./frontend/anti-fake-news # ⬅️ ชี้ไปที่โฟลเดอร์แอป Frontend
+          context: ./frontend/anti-fake-news # ชี้ไปที่โฟลเดอร์แอป Frontend
           push: true
           tags: rattikan042/se331-frontend:latest
           
@@ -46,8 +46,8 @@ jobs:
           username: ${{ secrets.HOST_USER_NAME }}
           key: ${{ secrets.HOST_SSH_PRIVATE_KEY }}
           port: 22
-          source: "frontend/anti-fake-news/docker-compose.yml" # ⬅️ Source Path
-          target: "/home/${{ secrets.HOST_USER_NAME }}/frontend" # ⬅️ Target Path
+          source: "frontend/anti-fake-news/docker-compose.yml" # Source Path
+          target: "/home/${{ secrets.HOST_USER_NAME }}/frontend" # Target Path
           overwrite: true
           
       - name: Deploy with Docker Compose

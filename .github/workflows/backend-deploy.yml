@@ -19,7 +19,7 @@ jobs:
           distribution: 'adopt'
           
       - name: Run Maven and Prepare Artifacts 
-        working-directory: ./backend # ⬅️ แก้ปัญหา POM Error
+        working-directory: ./backend # แก้ปัญหา POM Error
         run: |
           mvn clean install -DskipTests -B
           # ขั้นตอนนี้จำเป็นสำหรับการทำ Docker Build (ถ้า Dockerfile ใช้เลเยอร์แยก)
@@ -37,7 +37,7 @@ jobs:
       - name: Build and push Backend
         uses: docker/build-push-action@v6
         with:
-          context: ./backend # ⬅️ ชี้ไปที่โฟลเดอร์ backend
+          context: ./backend # ชี้ไปที่โฟลเดอร์ backend
           push: true
           tags: rattikan042/se331-backend:latest
           
@@ -60,7 +60,7 @@ jobs:
           key: ${{ secrets.HOST_SSH_PRIVATE_KEY }}
           port: 22
           source: "backend/docker-compose-prod.yml"
-          target: "/home/${{ secrets.HOST_USER_NAME }}/backend" # ⬅️ Target Path
+          target: "/home/${{ secrets.HOST_USER_NAME }}/backend" # Target Path
           overwrite: true
           
       - name: Deploy with Docker Compose
@@ -72,7 +72,6 @@ jobs:
           port: 22
           script: |
             cd /home/${{ secrets.HOST_USER_NAME }}/backend
-            # เปลี่ยนชื่อไฟล์เพื่อให้ Docker Compose หาเจอ (ถ้าไม่ได้ตั้งชื่อไฟล์ตอนรัน)
             mv docker-compose-prod.yml docker-compose.yml 
             echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login --username "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
             docker compose down
