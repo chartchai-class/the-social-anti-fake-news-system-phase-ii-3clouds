@@ -41,6 +41,29 @@ public class News {
     @Builder.Default
     private Integer fakeVotes = 0;
 
+    @Transient
+    private Integer totalVotes;
+
+    @Transient
+    private Integer commentCount;
+
+    // totalVotes (คำนวณจาก realVotes + fakeVotes)
+    public Integer getTotalVotes() {
+        if (totalVotes == null) {
+            totalVotes = (realVotes != null ? realVotes : 0) +
+                    (fakeVotes != null ? fakeVotes : 0);
+        }
+        return totalVotes;
+    }
+
+    // commentCount (นับจำนวน comments)
+    public Integer getCommentCount() {
+        if (commentCount == null) {
+            commentCount = comments != null ? comments.size() : 0;
+        }
+        return commentCount;
+    }
+
     // Helper method สำหรับเพิ่ม comment
     public void addComment(Comment comment) {
         comments.add(comment);

@@ -1,6 +1,7 @@
 package se331.backend.dao;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -94,8 +95,10 @@ public class NewsDaoImpl implements NewsDao {
      */
     @Override
     public Page<News> findAllVisible(Pageable pageable) {
+        List<News> allVisible = newsRepository.findByRemovedFalse(Pageable.unpaged()).getContent();
+        return createPageFromList(allVisible, pageable);
         // findByRemovedFalse = หาข่าวที่ removed = false
-        return newsRepository.findByRemovedFalse(pageable);
+        // return newsRepository.findByRemovedFalse(pageable);
     }
 
     // ========================================
@@ -129,7 +132,9 @@ public class NewsDaoImpl implements NewsDao {
      */
     @Override
     public Page<News> findAll(Pageable pageable) {
-        return newsRepository.findAll(pageable);
+        List<News> allNews = newsRepository.findAll();
+        return createPageFromList(allNews, pageable);
+//        return newsRepository.findAll(pageable);
     }
 
     // ========================================
@@ -306,16 +311,18 @@ public class NewsDaoImpl implements NewsDao {
      * @return Page<News> - ข่าวเฉพาะหน้าที่ต้องการ + ข้อมูล metadata
      */
     private Page<News> createPageFromList(List<News> list, Pageable pageable) {
+        List<News> sortedList = sortNewsList(list, pageable.getSort());
+
         // คำนวณ index เริ่มต้น
         // getOffset() = หน้าที่ * จำนวนต่อหน้า
         int start = (int) pageable.getOffset();
 
         // คำนวณ index สุดท้าย
-        int end = Math.min((start + pageable.getPageSize()), list.size());
+        int end = Math.min((start + pageable.getPageSize()), sortedList.size());
 
         // ดึงเฉพาะรายการในช่วงที่ต้องการ
         // ถ้า start >= list.size() = หน้านี้ไม่มีข้อมูล ส่งกลับ list ว่าง
-        List<News> pageContent = start >= list.size() ? List.of() : list.subList(start, end);
+        List<News> pageContent = start >= sortedList.size() ? List.of() : sortedList.subList(start, end);
 
         // สร้าง Page object
         // PageImpl = implementation ของ Page interface
@@ -323,6 +330,50 @@ public class NewsDaoImpl implements NewsDao {
         // - pageContent = รายการในหน้านี้
         // - pageable = ข้อมูล pagination
         // - list.size() = จำนวนรายการทั้งหมด (สำหรับคำนวณจำนวนหน้า)
-        return new PageImpl<>(pageContent, pageable, list.size());
+        return new PageImpl<>(pageContent, pageable, sortedList.size());
+    }
+
+    // Sorting
+    private List<News> sortNewsList(List<News> list, Sort sort) {
+        if (sort.isUnsorted()) {
+            return list; // ถ้าไม่มี sort ส่งกลับเลย
+        }
+
+        List<News> sortedList = new ArrayList<>(list);
+
+        for (Sort.Order order : sort) {
+            String property = order.getProperty();
+            boolean isAsc = order.isAscending();
+
+            sortedList.sort((a, b) -> {
+                int comparison = 0;
+
+                switch (property) {
+                    case "dateTime":
+                        // Sort by dateTime
+                        comparison = a.getDateTime().compareTo(b.getDateTime());
+                        break;
+
+                    case "totalVotes":
+                        // Sort by total votes (real + fake)
+                        comparison = Integer.compare(a.getTotalVotes(), b.getTotalVotes());
+                        break;
+
+                    case "commentCount":
+                        // Sort by number of comments
+                        comparison = Integer.compare(a.getCommentCount(), b.getCommentCount());
+                        break;
+
+                    default:
+                        // ถ้าเป็น field อื่นที่ไม่รู้จัก ไม่ sort
+                        comparison = 0;
+                }
+
+                // ถ้าเป็น descending ให้กลับทิศทาง
+                return isAsc ? comparison : -comparison;
+            });
+        }
+
+        return sortedList;
     }
 }

@@ -1,6 +1,8 @@
 package se331.backend.rest.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -152,18 +154,31 @@ public class NewsController {
             @RequestParam(value = "_limit", required = false) Integer perPage,
             // จำนวนข่าวต่อหน้า (_limit ตาม JSON API convention)
 
-            @RequestParam(value = "_page", required = false) Integer page) {
+            @RequestParam(value = "_page", required = false) Integer page,
         // หมายเลขหน้าที่ต้องการ (_page ตาม JSON API convention)
+
+            @RequestParam(value = "_sort", required = false) String sortField,
+            @RequestParam(value = "_order", required = false) String sortOrder) {
 
         // กำหนดค่า default ถ้าไม่มีการส่งมา
         perPage = perPage == null ? 10 : perPage; // ถ้าไม่ส่ง _limit มา ให้ใช้ 10
         page = page == null ? 1 : page; // ถ้าไม่ส่ง _page มา ให้ใช้ 1 (หน้าแรก)
 
+        sortField = sortField == null ? "dateTime" : sortField;
+        sortOrder = sortOrder == null ? "desc" : sortOrder;
+
+        Sort.Direction direction = sortOrder.equalsIgnoreCase("asc")
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+        Sort sort = Sort.by(direction, sortField);
+
+        Pageable pageable = PageRequest.of(page - 1, perPage, sort);
+
         // เรียก service เพื่อค้นหาและกรองข่าว
         // PageRequest.of(page - 1, perPage) = สร้าง pagination object
         // - page - 1 เพราะ Spring เริ่มนับหน้าจาก 0 (แต่ Frontend ส่งมาเริ่มที่ 1)
         // - perPage = จำนวนข่าวต่อหน้า
-        Page<NewsDTO> pageOutput = newsService.getNews(title, status, PageRequest.of(page - 1, perPage));
+        Page<NewsDTO> pageOutput = newsService.getNews(title, status, pageable);
 
         // สร้าง HTTP Headers เพื่อส่งข้อมูลเพิ่มเติม
         HttpHeaders responseHeader = new HttpHeaders();
