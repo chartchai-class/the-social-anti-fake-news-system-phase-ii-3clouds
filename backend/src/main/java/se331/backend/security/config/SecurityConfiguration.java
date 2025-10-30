@@ -102,10 +102,9 @@ public class SecurityConfiguration {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
-                "http://localhost:5173",
-                "http://20.198.178.0:8001",    // ← เปลี่ยนเป็น IP เรา
-                "http://20.198.178.0",         // ← เพิ่มนี้ด้วย (ไม่มี port)
-                "http://localhost:8080"        // ← สำหรับ local development
+                "http://localhost:*",           // ทุก port บน localhost
+                "http://20.198.178.0:*",        // ทุก port บน IP นี้
+                "http://13.212.6.216:*"         // ทุก port บน IP อื่น
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
