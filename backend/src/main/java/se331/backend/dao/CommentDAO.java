@@ -9,5 +9,4 @@ public interface CommentDAO {
     Page<Comment> findByNewsId(Long newsId, Pageable pageable);
     void deleteById(Long id);
     Comment findById(Long id);
-    
 }
