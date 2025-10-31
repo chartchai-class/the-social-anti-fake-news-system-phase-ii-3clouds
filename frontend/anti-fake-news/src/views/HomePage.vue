@@ -109,19 +109,30 @@
         </button>
       </div>
 
-      <!-- เลือกจำนวนข่าวต่อหน้า -->
-      <div class="flex items-center space-x-2 md:w-1/4 md:justify-end">
-        <span class="text-gray-600">News per page:</span>
-        <select
-          v-model="newsPerPage"
-          @change="updatePerPage"
-          :disabled="isDataLoading"
-          class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <option>6</option>
-          <option>12</option>
-          <option>24</option>
-        </select>
+      <!-- ===== Sort + Per Page ===== -->
+      <div class="flex items-center justify-end space-x-4 mt-2">
+        <!-- Sort Options -->
+        <div class="flex items-center space-x-2">
+          <span class="text-gray-600">Sort by:</span>
+          <select v-model="sortOrder" @change="onSortChange"
+            class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="mostVoted">Most Voted</option>
+            <option value="mostCommented">Most Commented</option>
+          </select>
+        </div>
+
+        <!-- News per page -->
+        <div class="flex items-center space-x-2">
+          <span class="text-gray-600">News per page:</span>
+          <select v-model="newsPerPage" @change="updatePerPage" :disabled="isDataLoading"
+            class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+            <option>6</option>
+            <option>12</option>
+            <option>24</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -227,7 +238,7 @@
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
     >
       <NewsCard
-        v-for="news in newsListWithStatus"
+        v-for="news in sortedNewsList"
         :key="news.id"
         :news="news"
         :search-query="searchQuery"
@@ -454,6 +465,7 @@ function onPageChanged(page: number) {
     filter: filterStatus.value !== 'all' ? filterStatus.value : undefined,
     search: searchQuery.value || undefined,
     statusSearch: statusSearchQuery.value || undefined,
+    sort: sortOrder.value,
   }
 
   router.push({
@@ -462,6 +474,46 @@ function onPageChanged(page: number) {
   })
 
   window.scrollTo({ top: 0, behavior: 'smooth' }) // เลื่อนขึ้นบนสุด
+}
+
+// สถานะ Sorting
+const sortOrder = ref<'newest' | 'oldest' | 'mostVoted' | 'mostCommented'>('newest')
+
+// Computed ข่าวพร้อมกรองและ sort
+const sortedNewsList = computed(() => {
+  const news = newsListWithStatus.value
+
+  switch (sortOrder.value) {
+    case 'newest':
+      return [...news].sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())
+    case 'oldest':
+      return [...news].sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
+    case 'mostVoted':
+      return [...news].sort(
+        (a, b) =>
+          (b.voteSummary?.real || 0) + (b.voteSummary?.fake || 0) -
+          ((a.voteSummary?.real || 0) + (a.voteSummary?.fake || 0))
+      )
+    case 'mostCommented':
+      return [...news].sort((a, b) => (b.comments?.length || 0) - (a.comments?.length || 0))
+    default:
+      return news
+  }
+})
+
+function onSortChange() {
+  currentPage.value = 1 // กลับไปหน้าแรก
+  router.push({
+    path: route.path,
+    query: {
+      page: 1,
+      perPage: newsPerPage.value,
+      filter: filterStatus.value !== 'all' ? filterStatus.value : undefined,
+      search: searchQuery.value || undefined,
+      statusSearch: statusSearchQuery.value || undefined,
+      sort: sortOrder.value, // ส่ง param ใหม่
+    },
+  })
 }
 
 /**
@@ -475,6 +527,7 @@ watchEffect(() => {
   const filterValue = (route.query.filter as FilterStatus) || 'all'
   const searchValue = (route.query.search as string) || ''
   const statusSearchValue = (route.query.statusSearch as string) || ''
+  const sortValue = (route.query.sort as 'newest' | 'oldest' | 'mostVoted' | 'mostCommented') || 'newest'
 
   // Sync ค่ากับ local state
   currentPage.value = pageValue
@@ -482,6 +535,7 @@ watchEffect(() => {
   filterStatus.value = filterValue
   searchQuery.value = searchValue
   statusSearchQuery.value = statusSearchValue
+  sortOrder.value = sortValue
 
   // เตรียม parameters สำหรับส่งไป Backend
   const params: any = {
@@ -489,6 +543,21 @@ watchEffect(() => {
     _limit: perPageValue, // แปลง perPage → _limit
   }
 
+    // SORT: ส่ง sort parameter ไปให้ Backend
+  if (sortValue === 'newest') {
+    params._sort = 'dateTime'
+    params._order = 'desc'
+  } else if (sortValue === 'oldest') {
+    params._sort = 'dateTime'
+    params._order = 'asc'
+  } else if (sortValue === 'mostVoted') {
+    params._sort = 'totalVotes'
+    params._order = 'desc'
+  } else if (sortValue === 'mostCommented') {
+    params._sort = 'commentCount'
+    params._order = 'desc'
+  }
+  
   // SEARCH: ถ้ามี keyword search ส่ง parameter "title"
   if (searchValue) {
     params.title = searchValue
