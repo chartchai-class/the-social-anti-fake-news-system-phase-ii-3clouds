@@ -282,7 +282,6 @@
 <script setup lang="ts">
 import { ref, computed, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useNewsStore } from '../stores/news'
 import NewsCard from '@/components/NewsCard.vue'
 import Pagination from '@/components/BasePagination.vue'
 import BaseInput from '@/components/BaseInput.vue'
@@ -294,7 +293,6 @@ import apiClient from '../services/NewsService'
 const route = useRoute() // อ่านค่าจาก URL
 const router = useRouter() // เปลี่ยน URL
 const authStore = useAuthStore()
-const newsStore = useNewsStore()
 
 const isAdmin = computed(() => authStore.hasRole('ROLE_ADMIN'))
 
@@ -481,24 +479,60 @@ const sortOrder = ref<'newest' | 'oldest' | 'mostVoted' | 'mostCommented'>('newe
 
 // Computed ข่าวพร้อมกรองและ sort
 const sortedNewsList = computed(() => {
-  const news = newsListWithStatus.value
+  const annotated = newsListWithStatus.value.map((item, index) => ({ item, index }))
 
-  switch (sortOrder.value) {
-    case 'newest':
-      return [...news].sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())
-    case 'oldest':
-      return [...news].sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
-    case 'mostVoted':
-      return [...news].sort(
-        (a, b) =>
-          (b.voteSummary?.real || 0) + (b.voteSummary?.fake || 0) -
-          ((a.voteSummary?.real || 0) + (a.voteSummary?.fake || 0))
-      )
-    case 'mostCommented':
-      return [...news].sort((a, b) => (b.comments?.length || 0) - (a.comments?.length || 0))
-    default:
-      return news
+  const sortBy = (items: typeof annotated) => {
+    switch (sortOrder.value) {
+      case 'newest':
+        return [...items].sort(
+          (a, b) => new Date(b.item.dateTime).getTime() - new Date(a.item.dateTime).getTime()
+        )
+      case 'oldest':
+        return [...items].sort(
+          (a, b) => new Date(a.item.dateTime).getTime() - new Date(b.item.dateTime).getTime()
+        )
+      case 'mostVoted':
+        return [...items].sort(
+          (a, b) =>
+            (b.item.voteSummary?.real || 0) + (b.item.voteSummary?.fake || 0) -
+            ((a.item.voteSummary?.real || 0) + (a.item.voteSummary?.fake || 0))
+        )
+      case 'mostCommented':
+        return [...items].sort(
+          (a, b) => (b.item.comments?.length || 0) - (a.item.comments?.length || 0)
+        )
+      default:
+        return items
+    }
   }
+
+  const sorted = sortBy(annotated)
+
+  const sortedWithPosition = sorted.map((entry, position) => ({
+    ...entry,
+    position,
+  }))
+
+  const removedEntries = sortedWithPosition.filter(
+    ({ item }) => item.status === 'removed' || item.removed
+  )
+
+  if (!removedEntries.length) {
+    return sorted.map(({ item }) => item)
+  }
+
+  const withoutRemoved = sortedWithPosition.filter(
+    ({ item }) => item.status !== 'removed' && !item.removed
+  )
+
+  const restoredOrder = [...withoutRemoved]
+
+  removedEntries.forEach((entry) => {
+    const insertAt = Math.min(entry.position, restoredOrder.length)
+    restoredOrder.splice(insertAt, 0, entry)
+  })
+
+  return restoredOrder.map(({ item }) => item)
 })
 
 function onSortChange() {
@@ -603,10 +637,10 @@ watchEffect(() => {
     // แก้ตรงนี้: ตรวจสอบว่าเป็น array ก่อน
     newsList.value = Array.isArray(response.data) ? response.data : []
     totalItems.value = parseInt(response.headers['x-total-count']) || newsList.value.length
-    console.log('✅ Received:', newsList.value.length, 'items')
+    console.log('Received:', newsList.value.length, 'items')
   })
   .catch((error) => {
-    console.error('❌ Error:', error)
+    console.error('Error:', error)
     newsList.value = []
     totalItems.value = 0
   })
@@ -629,11 +663,18 @@ const newsListWithStatus = computed(() => {
  * Handler: เมื่อลบข่าวสำเร็จ
  */
 const handleNewsRemoved = (removedNewsId: number) => {
-  console.log(`News with ID ${removedNewsId} was removed`)
-  // โหลดข้อมูลใหม่
-  router.replace({
-    path: route.path,
-    query: route.query,
-  })
+  const index = newsList.value.findIndex((news) => news.id === removedNewsId)
+  if (index === -1) {
+    return
+  }
+
+  const original = newsList.value[index]
+  const updated: News = {
+    ...original,
+    status: 'removed',
+    removed: true,
+  }
+
+  newsList.value.splice(index, 1, updated)
 }
 </script>
