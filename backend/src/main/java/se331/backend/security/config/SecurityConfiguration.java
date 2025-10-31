@@ -84,6 +84,8 @@ public class SecurityConfiguration {
                             // 9. จัดการ User
                             .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
 
+                            .requestMatchers("/").permitAll()
+
                             // 10. Request อื่นๆ ที่เหลือ - ต้อง Login
                             .anyRequest().authenticated();
                 })
