@@ -200,10 +200,13 @@ import { useAuthStore } from '../stores/auth';
 // Interface สำหรับ Props ที่รับเข้ามา
 interface Props {
   news: News;  // รับข้อมูลข่าวเป็น props
+  searchQuery?: string;
 }
 
 // กำหนดค่า default สำหรับ props
-const props = withDefaults(defineProps<Props>(), {});
+const props = withDefaults(defineProps<Props>(), {
+  searchQuery: ''  // ✅ ค่า default
+});
 
 // กำหนด Events ที่ component นี้สามารถ emit ออกไปได้
 const emit = defineEmits<{
