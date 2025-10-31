@@ -18,7 +18,10 @@ https://github.com/chartchai-class/the-social-anti-fake-news-system-phase-ii-3cl
 
 ---
 
-### Deployment URL
-- **frontend:** http://20.198.178.0:8001/
-- **backend API:** http://20.198.178.0:8999/
-- **phpMyadmin:** http://20.198.178.0:9000/
+### Deployment
+This project is deployed using **Azure for Students** ([Azure Dev Tools](https://azureforeducation.microsoft.com/devtools))
+
+#### 🚀 Deployment URL
+- **Frontend:** http://20.198.178.0:8001/
+- **Backend API:** http://20.198.178.0:8999/
+- **phpMyAdmin:** http://20.198.178.0:9000/
