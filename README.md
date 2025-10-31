@@ -25,3 +25,8 @@ This project is deployed using **Azure for Students** ([Azure Dev Tools](https:/
 - **Frontend:** http://20.198.178.0:8001/
 - **Backend API:** http://20.198.178.0:8999/
 - **phpMyAdmin:** http://20.198.178.0:9000/
+
+---
+
+### The Entity Design 
+https://drive.google.com/file/d/16CLeGIhYcl_ZAsx1tt9aM8YcOMopcO-I/view
